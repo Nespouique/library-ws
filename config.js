@@ -1,12 +1,13 @@
+import dotenv from 'dotenv';
+dotenv.config();
 const config = {
     db: {
-        /* don't expose password or any sensitive info, done only for demo */
-        host: "192.168.1.32",
-        port: 3307,
-        user: "libraryDB",
-        password: "L1br@ry_DB",
-        database: "Library",
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
     },
-    listPerPage: 10,
+    listPerPage: parseInt(process.env.LIST_PER_PAGE) || 10,
 };
-module.exports = config;
+export default config;

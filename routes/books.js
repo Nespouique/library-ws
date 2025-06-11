@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
+import books from '../services/books.js';
 const router = express.Router();
-const books = require('../services/books');
 
 /* GET books. */
 router.get('/', async function(req, res, next) {
@@ -12,4 +12,4 @@ router.get('/', async function(req, res, next) {
   }
 });
 
-module.exports = router;
+export default router;

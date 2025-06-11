@@ -1,8 +1,12 @@
-const express = require("express");
+import express from "express";
+import books from "./routes/books.js";
+import authors from "./routes/authors.js";
+import dotenv from "dotenv";
+dotenv.config();
+
 const app = express();
-const port = 3000;
-const books = require("./routes/books");
-const authors = require("./routes/authors");
+const port = process.env.PORT || 3000;
+
 app.use(express.json());
 app.use(
     express.urlencoded({
@@ -14,6 +18,7 @@ app.get("/", (req, res) => {
 });
 app.use('/books', books);
 app.use('/authors', authors);
+
 /* Error handler middleware */
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
@@ -21,6 +26,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).json({ message: err.message });
   return;
 });
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });

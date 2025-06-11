@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import authors from '../services/authors.js';
+
 const router = express.Router();
-const authors = require('../services/authors');
 
 /* GET authors. */
 router.get('/', async function(req, res, next) {
@@ -12,4 +13,4 @@ router.get('/', async function(req, res, next) {
     }
 });
 
-module.exports = router;
+export default router;

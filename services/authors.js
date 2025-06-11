@@ -1,6 +1,6 @@
 import db from './db.js';
-import { getOffset, emptyOrRows } from '../helper.js';
-import config from '../config.js';
+import { getOffset, emptyOrRows } from '../utils/helper.js';
+import config from '../config/config.js';
 
 async function getMultiple(page = 1){
     const offset = getOffset(page, config.listPerPage);

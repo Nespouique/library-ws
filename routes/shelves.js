@@ -133,7 +133,7 @@ router.get('/:id', async function (req, res, next) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-// POST shelf
+// CREATE shelf
 router.post('/', async function (req, res, next) {
     try {
         const created = await shelves.create(req.body);
@@ -250,8 +250,10 @@ router.put('/:id', async function (req, res, next) {
 // DELETE shelf
 router.delete('/:id', async function (req, res, next) {
     try {
-        const result = await shelves.remove(req.params.id);
-        res.json(result);
+        const deleted = await shelves.remove(req.params.id);
+        if (!deleted)
+            return res.status(404).json({ message: 'Shelf not found' });
+        res.json({ message: 'Shelf deleted' });
     } catch (err) {
         next(err);
     }

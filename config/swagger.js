@@ -99,6 +99,16 @@ const options = {
                         },
                     },
                 },
+                Shelf: {
+                    type: 'object',
+                    properties: {
+                        id: {
+                            type: 'integer',
+                            description: 'The auto-generated id of the shelf',
+                            example: 1,
+                        },
+                    },
+                },
                 Error: {
                     type: 'object',
                     properties: {
@@ -149,6 +159,26 @@ const options = {
                         },
                     },
                 },
+                PaginatedShelves: {
+                    type: 'object',
+                    properties: {
+                        data: {
+                            type: 'array',
+                            items: {
+                                $ref: '#/components/schemas/Shelf',
+                            },
+                        },
+                        meta: {
+                            type: 'object',
+                            properties: {
+                                page: {
+                                    type: 'integer',
+                                    example: 1,
+                                },
+                            },
+                        },
+                    },
+                },
             },
         },
         tags: [
@@ -159,6 +189,10 @@ const options = {
             {
                 name: 'Books',
                 description: 'Operations about books',
+            },
+            {
+                name: 'Shelves',
+                description: 'Operations about library shelves',
             },
         ],
     },

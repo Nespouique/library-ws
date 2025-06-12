@@ -1,6 +1,5 @@
 import express from 'express';
 import shelves from '../services/shelves.js';
-
 const router = express.Router();
 
 /**
@@ -56,7 +55,8 @@ router.get('/', async function (req, res, next) {
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Shelf UUID *     responses:
+ *         description: Shelf UUID
+ *     responses:
  *       200:
  *         description: Successfully retrieved shelf
  *         content:

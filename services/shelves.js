@@ -29,7 +29,9 @@ async function create(shelf) {
     // For now, we only insert with auto-generated ID
     // Future: could add properties like name, location, wled_segment, etc.
     const shelfId = uuidv4();
-    const result = await db.query('INSERT INTO Shelves (id) VALUES (?)', [shelfId]);
+    const result = await db.query('INSERT INTO Shelves (id) VALUES (?)', [
+        shelfId,
+    ]);
 
     return { id: result.insertId, ...shelf };
 }

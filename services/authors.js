@@ -38,7 +38,7 @@ async function create(author) {
         'INSERT INTO Authors (id, firstName, lastName) VALUES (?, ?, ?)',
         [authorId, author.firstName, author.lastName]
     );
-    
+
     return { id: result.insertId, ...author };
 }
 

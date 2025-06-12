@@ -1,6 +1,5 @@
 import express from 'express';
 import authors from '../services/authors.js';
-
 const router = express.Router();
 
 /**
@@ -47,7 +46,7 @@ router.get('/', async function (req, res, next) {
  * /authors/{id}:
  *   get:
  *     summary: Get author by UUID
- *     description: Retrieve a specific author by their UUID
+ *     description: Retrieve a specific author by its UUID
  *     tags: [Authors]
  *     parameters:
  *       - in: path
@@ -56,7 +55,8 @@ router.get('/', async function (req, res, next) {
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Author UUID *     responses:
+ *         description: Author UUID
+ *     responses:
  *       200:
  *         description: Successfully retrieved author
  *         content:

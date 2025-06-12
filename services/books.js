@@ -57,7 +57,7 @@ async function create(book) {
             book.shelf || null,
         ]
     );
-    
+
     return { id: result.insertId, ...book };
 }
 

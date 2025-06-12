@@ -29,7 +29,8 @@ const options = {
             },
         ],
         components: {
-            schemas: {                Author: {
+            schemas: {
+                Author: {
                     type: 'object',
                     required: ['firstName', 'lastName'],
                     properties: {

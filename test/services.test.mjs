@@ -30,6 +30,8 @@ const mockBooks = [
     },
 ];
 
+const mockShelves = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
 // Simple service implementations with mock data
 const authorsService = {
     async getMultiple(page = 1) {
@@ -171,6 +173,50 @@ const booksService = {
 
         mockBooks.splice(index, 1);
         return true;
+    },
+};
+
+const shelvesService = {
+    async getMultiple(page = 1) {
+        const listPerPage = 10;
+        const offset = getOffset(page, listPerPage);
+        const data = emptyOrRows(
+            mockShelves.slice(offset, offset + listPerPage)
+        );
+        return { data, meta: { page } };
+    },
+
+    async getById(id) {
+        const shelf = mockShelves.find(s => s.id === id);
+        return shelf || null;
+    },
+
+    async create() {
+        const newId = Math.max(...mockShelves.map(s => s.id)) + 1;
+        const newShelf = { id: newId };
+        mockShelves.push(newShelf);
+        return { message: 'Shelf created successfully', id: newId };
+    },
+
+    async update(id) {
+        const index = mockShelves.findIndex(s => s.id === id);
+        if (index === -1) return { message: 'Error in updating shelf' };
+
+        return { message: 'Shelf updated successfully' };
+    },
+
+    async remove(id) {
+        // Check if shelf is referenced by any books
+        const booksOnShelf = mockBooks.filter(b => b.shelf === id);
+        if (booksOnShelf.length > 0) {
+            throw new Error('Cannot delete shelf: it contains books');
+        }
+
+        const index = mockShelves.findIndex(s => s.id === id);
+        if (index === -1) return { message: 'Error in deleting shelf' };
+
+        mockShelves.splice(index, 1);
+        return { message: 'Shelf deleted successfully' };
     },
 };
 
@@ -486,5 +532,110 @@ describe('Helper Functions', () => {
 
         expect(emptyOrRows(testData)).toEqual(testData);
         expect(emptyOrRows(testData)).toBe(testData); // Should return the same reference for efficiency
+    });
+});
+
+describe('Shelves Service - Unit Tests with Mock Data', () => {
+    beforeEach(() => {
+        // Reset mock data before each test
+        mockShelves.length = 0;
+        mockShelves.push({ id: 1 }, { id: 2 }, { id: 3 });
+    });
+
+    describe('getMultiple', () => {
+        test('should return paginated shelves', async () => {
+            const result = await shelvesService.getMultiple(1);
+
+            expect(result).toEqual({
+                data: mockShelves,
+                meta: { page: 1 },
+            });
+        });
+
+        test('should handle empty results', async () => {
+            mockShelves.length = 0; // Clear mock data
+
+            const result = await shelvesService.getMultiple(1);
+
+            expect(result).toEqual({
+                data: [],
+                meta: { page: 1 },
+            });
+        });
+    });
+
+    describe('getById', () => {
+        test('should return shelf when found', async () => {
+            const result = await shelvesService.getById(1);
+
+            expect(result).toEqual({ id: 1 });
+        });
+
+        test('should return null when not found', async () => {
+            const result = await shelvesService.getById(999);
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('create', () => {
+        test('should create new shelf successfully', async () => {
+            const result = await shelvesService.create();
+
+            expect(result).toEqual({
+                message: 'Shelf created successfully',
+                id: 4,
+            });
+            expect(mockShelves).toHaveLength(4);
+            expect(mockShelves[3]).toEqual({ id: 4 });
+        });
+    });
+
+    describe('update', () => {
+        test('should update shelf successfully', async () => {
+            const result = await shelvesService.update(1);
+
+            expect(result).toEqual({
+                message: 'Shelf updated successfully',
+            });
+        });
+
+        test('should return error when shelf not found', async () => {
+            const result = await shelvesService.update(999);
+
+            expect(result).toEqual({
+                message: 'Error in updating shelf',
+            });
+        });
+    });
+
+    describe('remove', () => {
+        test('should delete shelf successfully', async () => {
+            const result = await shelvesService.remove(1);
+
+            expect(result).toEqual({
+                message: 'Shelf deleted successfully',
+            });
+            expect(mockShelves).toHaveLength(2);
+            expect(mockShelves.find(s => s.id === 1)).toBeUndefined();
+        });
+
+        test('should return error when shelf not found', async () => {
+            const result = await shelvesService.remove(999);
+
+            expect(result).toEqual({
+                message: 'Error in deleting shelf',
+            });
+            expect(mockShelves).toHaveLength(3);
+        });
+
+        test('should throw error when shelf contains books', async () => {
+            // Add a book with shelf reference
+            mockBooks.push({ id: 3, title: 'Test Book', shelf: 1 });
+
+            await expect(shelvesService.remove(1)).rejects.toThrow(
+                'Cannot delete shelf: it contains books'
+            );
+        });
     });
 });

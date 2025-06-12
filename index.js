@@ -1,6 +1,7 @@
 import express from 'express';
 import books from './routes/books.js';
 import authors from './routes/authors.js';
+import shelves from './routes/shelves.js';
 import dotenv from 'dotenv';
 import { specs, swaggerUi } from './config/swagger.js';
 
@@ -39,6 +40,12 @@ app.get('/', (req, res) => {
     res.json({ message: 'ok' });
 });
 
+// Swagger JSON endpoint for external tools (Postman, etc.)
+app.get('/api-docs/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+});
+
 // Swagger documentation endpoint
 app.use(
     '/api-docs',
@@ -51,6 +58,7 @@ app.use(
 
 app.use('/books', books);
 app.use('/authors', authors);
+app.use('/shelves', shelves);
 
 /* Error handler middleware */
 app.use((err, req, res, _next) => {

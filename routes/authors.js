@@ -169,6 +169,9 @@ router.post('/', async function (req, res, next) {
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
  *             properties:
  *               firstName:
  *                 type: string
@@ -212,6 +215,78 @@ router.post('/', async function (req, res, next) {
 router.put('/:id', async function (req, res, next) {
     try {
         const updated = await authors.update(req.params.id, req.body);
+        if (!updated) return res.status(404).json({ message: 'Author not found' });
+        res.json({ message: 'Author updated' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * @swagger
+ * /authors/{id}:
+ *   patch:
+ *     summary: Partially update an author
+ *     description: Update specific fields of an existing author
+ *     tags: [Authors]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Author UUID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: Author first name
+ *                 example: Victor
+ *               lastName:
+ *                 type: string
+ *                 description: Author last name
+ *                 example: HUGO
+ *             description: Only include fields you want to update
+ *     responses:
+ *       200:
+ *         description: Author updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Author updated
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Another author with this name already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+// PATCH author (partial update)
+router.patch('/:id', async function (req, res, next) {
+    try {
+        const updated = await authors.updatePartial(req.params.id, req.body);
         if (!updated) return res.status(404).json({ message: 'Author not found' });
         res.json({ message: 'Author updated' });
     } catch (err) {

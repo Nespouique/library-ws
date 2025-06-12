@@ -33,6 +33,13 @@ async function create(author) {
 }
 
 async function update(id, author) {
+    // Validation PUT : tous les champs requis doivent être fournis
+    if (!author.firstName || !author.lastName) {
+        const error = new Error('PUT requires complete object: firstName and lastName are required');
+        error.statusCode = 400;
+        throw error;
+    }
+
     // Vérifie qu'aucun autre auteur n'a déjà ce prénom et nom
     const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [author.firstName, author.lastName, id]);
     if (existing.length) {
@@ -41,6 +48,51 @@ async function update(id, author) {
         throw error;
     }
     const result = await db.query('UPDATE Authors SET firstName=?, lastName=? WHERE id=?', [author.firstName, author.lastName, id]);
+
+    return result.affectedRows > 0;
+}
+
+async function updatePartial(id, updates) {
+    // Récupère l'auteur existant d'abord
+    const current = await getById(id);
+    if (!current) {
+        return false;
+    }
+
+    // Construit dynamiquement la requête UPDATE
+    const fields = [];
+    const values = [];
+
+    if (updates.firstName !== undefined) {
+        fields.push('firstName = ?');
+        values.push(updates.firstName);
+    }
+
+    if (updates.lastName !== undefined) {
+        fields.push('lastName = ?');
+        values.push(updates.lastName);
+    }
+
+    // Si aucun champ à mettre à jour
+    if (fields.length === 0) {
+        return true; // Rien à faire, considéré comme succès
+    }
+
+    // Vérifie les conflits de noms si nécessaire
+    const finalFirstName = updates.firstName !== undefined ? updates.firstName : current.firstName;
+    const finalLastName = updates.lastName !== undefined ? updates.lastName : current.lastName;
+
+    const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [finalFirstName, finalLastName, id]);
+    if (existing.length) {
+        const error = new Error('Another author with this name already exists');
+        error.statusCode = 409;
+        throw error;
+    }
+
+    // Exécute la mise à jour
+    values.push(id);
+    const query = `UPDATE Authors SET ${fields.join(', ')} WHERE id = ?`;
+    const result = await db.query(query, values);
 
     return result.affectedRows > 0;
 }
@@ -56,5 +108,6 @@ export default {
     getById,
     create,
     update,
+    updatePartial,
     remove,
 };

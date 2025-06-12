@@ -204,6 +204,64 @@ router.put('/:id', async function (req, res, next) {
 /**
  * @swagger
  * /shelves/{id}:
+ *   patch:
+ *     summary: Partially update a shelf
+ *     description: Update specific fields of a shelf (currently no updatable fields)
+ *     tags: [Shelves]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Shelf UUID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Empty object (no updatable fields currently)
+ *             example: {}
+ *     responses:
+ *       200:
+ *         description: Shelf updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Shelf updated
+ *       404:
+ *         description: Shelf not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+// PATCH shelf (partial update)
+router.patch('/:id', async function (req, res, next) {
+    try {
+        const updated = await shelves.updatePartial(req.params.id, req.body);
+        if (!updated) return res.status(404).json({ message: 'Shelf not found' });
+        res.json({ message: 'Shelf updated' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * @swagger
+ * /shelves/{id}:
  *   delete:
  *     summary: Delete a shelf
  *     description: Delete a shelf by UUID (only if no books are assigned to it)

@@ -65,7 +65,7 @@ router.get('/', async function (req, res, next) {
  *               type: object
  *               properties:
  *                 data:
- *                   $ref: '#/components/schemas/Book'
+ *                   $ref: '#/components/schemas/BookResponse'
  *       404:
  *         description: Book not found
  *         content:
@@ -102,43 +102,7 @@ router.get('/:id', async function (req, res, next) {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - title
- *               - author
- *               - isbn
- *             properties:
- *               title:
- *                 type: string
- *                 description: Book title
- *                 example: Les Misérables
- *               author:
- *                 type: string
- *                 format: uuid
- *                 description: Author UUID (must exist)
- *                 example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
- *               isbn:
- *                 type: string
- *                 description: ISBN-13 code (must be unique)
- *                 example: "9782253096337"
- *               date:
- *                 type: string
- *                 format: date
- *                 description: Publication date
- *                 example: "1998-12-02"
- *               description:
- *                 type: string
- *                 description: Book description
- *                 example: "Les Misérables is a French historical novel by Victor Hugo..."
- *               jacket:
- *                 type: string
- *                 description: Cover image URL
- *                 example: "/covers/les-miserables.jpg"
- *               shelf:
- *                 type: string
- *                 format: uuid
- *                 description: Shelf UUID
- *                 example: c3d4e5f6-g7h8-9012-cdef-123456789012
+ *             $ref: '#/components/schemas/BookInput'
  *     responses:
  *       201:
  *         description: Book created successfully
@@ -148,7 +112,7 @@ router.get('/:id', async function (req, res, next) {
  *               type: object
  *               properties:
  *                 data:
- *                   $ref: '#/components/schemas/Book'
+ *                   $ref: '#/components/schemas/BookResponse'
  *       400:
  *         description: Author does not exist
  *         content:
@@ -198,39 +162,16 @@ router.post('/', async function (req, res, next) {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *                 description: Book title
- *                 example: Les Misérables
- *               author:
- *                 type: string
- *                 format: uuid
- *                 description: Author UUID (must exist)
- *                 example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
- *               isbn:
- *                 type: string
- *                 description: ISBN-13 code (must be unique)
- *                 example: "9782253096337"
- *               date:
- *                 type: string
- *                 format: date
- *                 description: Publication date
- *                 example: "1998-12-02"
- *               description:
- *                 type: string
- *                 description: Book description
- *                 example: "Les Misérables is a French historical novel by Victor Hugo..."
- *               jacket:
- *                 type: string
- *                 description: Cover image URL
- *                 example: "/covers/les-miserables.jpg"
- *               shelf:
- *                 type: string
- *                 format: uuid
- *                 description: Shelf UUID
- *                 example: c3d4e5f6-g7h8-9012-cdef-123456789012
+ *             allOf:
+ *               - $ref: '#/components/schemas/BookInput'
+ *               - type: object
+ *                 required:
+ *                   - title
+ *                   - date
+ *                   - author
+ *                   - description
+ *                   - isbn
+ *                 description: 'PUT requires all fields to be provided'
  *     responses:
  *       200:
  *         description: Book updated successfully
@@ -271,6 +212,78 @@ router.post('/', async function (req, res, next) {
 router.put('/:id', async function (req, res, next) {
     try {
         const updated = await books.update(req.params.id, req.body);
+        if (!updated) return res.status(404).json({ message: 'Book not found' });
+        res.json({ message: 'Book updated' });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * @swagger
+ * /books/{id}:
+ *   patch:
+ *     summary: Partially update a book
+ *     description: Update specific fields of an existing book
+ *     tags: [Books]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Book UUID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             allOf:
+ *               - $ref: '#/components/schemas/BookInput'
+ *               - type: object
+ *                 description: 'Only include fields you want to update. All fields are optional for PATCH.'
+ *                 required: []
+ *     responses:
+ *       200:
+ *         description: Book updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Book updated
+ *       400:
+ *         description: Bad request - invalid author or duplicate ISBN
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Book not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Book with this ISBN already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+// PATCH book (partial update)
+router.patch('/:id', async function (req, res, next) {
+    try {
+        const updated = await books.updatePartial(req.params.id, req.body);
         if (!updated) return res.status(404).json({ message: 'Book not found' });
         res.json({ message: 'Book updated' });
     } catch (err) {

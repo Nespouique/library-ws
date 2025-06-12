@@ -30,6 +30,7 @@ const mockBooks = [
         date: '2024-01-01',
         description: 'Description 1',
         jacket: '/cover1.jpg',
+        shelf: 'd4e5f6g7-h8i9-0123-def0-234567890123',
     },
     {
         id: 'f6g7h8i9-j0k1-2345-f012-456789012345',
@@ -39,6 +40,7 @@ const mockBooks = [
         date: '2024-02-01',
         description: 'Description 2',
         jacket: '/cover2.jpg',
+        shelf: null, // Book not on any shelf
     },
 ];
 
@@ -83,6 +85,13 @@ const authorsService = {
     },
 
     async update(id, author) {
+        // Validation PUT : tous les champs requis doivent être fournis
+        if (!author.firstName || !author.lastName) {
+            const error = new Error('PUT requires complete object: firstName and lastName are required');
+            error.statusCode = 400;
+            throw error;
+        }
+
         // Check for duplicate name
         const duplicate = mockAuthors.find(a => a.id !== id && a.firstName === author.firstName && a.lastName === author.lastName);
         if (duplicate) {
@@ -95,6 +104,36 @@ const authorsService = {
         if (index === -1) return false;
 
         mockAuthors[index] = { ...mockAuthors[index], ...author };
+        return true;
+    },
+
+    async updatePartial(id, updates) {
+        // Get current author
+        const index = mockAuthors.findIndex(a => a.id === id);
+        if (index === -1) return false;
+
+        const current = mockAuthors[index];
+
+        // Build final values for validation
+        const finalFirstName = updates.firstName !== undefined ? updates.firstName : current.firstName;
+        const finalLastName = updates.lastName !== undefined ? updates.lastName : current.lastName;
+
+        // Check for duplicate name
+        const duplicate = mockAuthors.find(a => a.id !== id && a.firstName === finalFirstName && a.lastName === finalLastName);
+        if (duplicate) {
+            const error = new Error('Another author with this name already exists');
+            error.statusCode = 409;
+            throw error;
+        }
+
+        // Apply partial updates
+        if (updates.firstName !== undefined) {
+            mockAuthors[index].firstName = updates.firstName;
+        }
+        if (updates.lastName !== undefined) {
+            mockAuthors[index].lastName = updates.lastName;
+        }
+
         return true;
     },
 
@@ -111,18 +150,52 @@ const booksService = {
     async getMultiple(page = 1) {
         const listPerPage = 10;
         const offset = getOffset(page, listPerPage);
-        const data = emptyOrRows(mockBooks.slice(offset, offset + listPerPage));
+        const booksWithAuthors = mockBooks.slice(offset, offset + listPerPage).map(book => {
+            const author = mockAuthors.find(a => a.id === book.author);
+            return {
+                ...book,
+                author: author
+                    ? {
+                          id: author.id,
+                          firstName: author.firstName,
+                          lastName: author.lastName,
+                      }
+                    : null,
+            };
+        });
+        const data = emptyOrRows(booksWithAuthors);
         return { data, meta: { page } };
     },
 
     async getById(id) {
         const book = mockBooks.find(b => b.id === id);
-        return book || null;
+        if (!book) return null;
+
+        const author = mockAuthors.find(a => a.id === book.author);
+        return {
+            ...book,
+            author: author
+                ? {
+                      id: author.id,
+                      firstName: author.firstName,
+                      lastName: author.lastName,
+                  }
+                : null,
+        };
     },
 
     async create(book) {
+        // Extract author ID whether it's a string or an object with id property
+        const authorId = typeof book.author === 'string' ? book.author : book.author?.id;
+
+        if (!authorId) {
+            const error = new Error('Author ID is required');
+            error.statusCode = 400;
+            throw error;
+        }
+
         // Check if author exists
-        const authorExists = mockAuthors.find(a => a.id === book.author);
+        const authorExists = mockAuthors.find(a => a.id === authorId);
         if (!authorExists) {
             const error = new Error('Author does not exist');
             error.statusCode = 400;
@@ -137,36 +210,108 @@ const booksService = {
             throw error;
         }
         const newId = generateTestUuid();
-        const newBook = { id: newId, ...book };
+        const newBook = { id: newId, ...book, author: authorId };
         mockBooks.push(newBook);
-        return newBook;
+
+        // Return the book in the same format as getById (with author as object)
+        // but keep the stored version with author as ID
+        const author = mockAuthors.find(a => a.id === authorId);
+        return {
+            id: newId,
+            title: book.title,
+            date: book.date,
+            description: book.description,
+            isbn: book.isbn,
+            jacket: book.jacket,
+            shelf: book.shelf || null,
+            author: author
+                ? {
+                      id: author.id,
+                      firstName: author.firstName,
+                      lastName: author.lastName,
+                  }
+                : null,
+        };
     },
 
     async update(id, book) {
+        // Extract author ID whether it's a string or an object with id property
+        const authorId = typeof book.author === 'string' ? book.author : book.author?.id;
+
+        // Validation PUT : tous les champs requis doivent être fournis
+        if (!book.title || !book.date || !authorId || !book.description || !book.isbn) {
+            const error = new Error('PUT requires complete object: title, date, author, description, and isbn are required');
+            error.statusCode = 400;
+            throw error;
+        }
+
         // Check if author exists
-        if (book.author) {
-            const authorExists = mockAuthors.find(a => a.id === book.author);
-            if (!authorExists) {
-                const error = new Error('Author does not exist');
-                error.statusCode = 400;
-                throw error;
-            }
+        const authorExistsUpdate = mockAuthors.find(a => a.id === authorId);
+        if (!authorExistsUpdate) {
+            const error = new Error('Author does not exist');
+            error.statusCode = 400;
+            throw error;
         }
 
         // Check for duplicate ISBN
-        if (book.isbn) {
-            const duplicate = mockBooks.find(b => b.id !== id && b.isbn === book.isbn);
-            if (duplicate) {
-                const error = new Error('Another book with this ISBN already exists');
-                error.statusCode = 409;
-                throw error;
-            }
+        const duplicate = mockBooks.find(b => b.id !== id && b.isbn === book.isbn);
+        if (duplicate) {
+            const error = new Error('Book with this ISBN already exists');
+            error.statusCode = 409;
+            throw error;
         }
 
         const index = mockBooks.findIndex(b => b.id === id);
         if (index === -1) return false;
 
-        mockBooks[index] = { ...mockBooks[index], ...book };
+        mockBooks[index] = { ...mockBooks[index], ...book, author: authorId };
+        return true;
+    },
+
+    async updatePartial(id, updates) {
+        // Get current book
+        const index = mockBooks.findIndex(b => b.id === id);
+        if (index === -1) return false;
+
+        // Validate author if provided
+        if (updates.author !== undefined) {
+            // Extract author ID whether it's a string or an object with id property
+            const authorId = typeof updates.author === 'string' ? updates.author : updates.author?.id;
+
+            if (!authorId) {
+                const error = new Error('Author ID is required');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const authorExistsPartial = mockAuthors.find(a => a.id === authorId);
+            if (!authorExistsPartial) {
+                const error = new Error('Author does not exist');
+                error.statusCode = 400;
+                throw error;
+            }
+
+            // Store the authorId for the update
+            updates.author = authorId;
+        }
+
+        // Check for duplicate ISBN if provided
+        if (updates.isbn !== undefined) {
+            const duplicate = mockBooks.find(b => b.id !== id && b.isbn === updates.isbn);
+            if (duplicate) {
+                const error = new Error('Book with this ISBN already exists');
+                error.statusCode = 409;
+                throw error;
+            }
+        }
+
+        // Apply partial updates
+        Object.keys(updates).forEach(key => {
+            if (updates[key] !== undefined) {
+                mockBooks[index][key] = updates[key];
+            }
+        });
+
         return true;
     },
 
@@ -200,9 +345,18 @@ const shelvesService = {
 
     async update(id) {
         const index = mockShelves.findIndex(s => s.id === id);
-        if (index === -1) return { message: 'Error in updating shelf' };
+        if (index === -1) return false;
 
-        return { message: 'Shelf updated successfully' };
+        return true;
+    },
+
+    async updatePartial(id, _updates) {
+        const index = mockShelves.findIndex(s => s.id === id);
+        if (index === -1) return false;
+
+        // Since we only have ID and no other updatable fields,
+        // any partial update is essentially a no-op but successful
+        return true;
     },
 
     async remove(id) {
@@ -213,10 +367,10 @@ const shelvesService = {
         }
 
         const index = mockShelves.findIndex(s => s.id === id);
-        if (index === -1) return { message: 'Error in deleting shelf' };
+        if (index === -1) return false;
 
         mockShelves.splice(index, 1);
-        return { message: 'Shelf deleted successfully' };
+        return true;
     },
 };
 
@@ -346,6 +500,118 @@ describe('Authors Service - Unit Tests with Mock Data (UUID)', () => {
 
             await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow('Another author with this name already exists');
         });
+
+        test('should throw error when firstName is missing (PUT validation)', async () => {
+            const updateData = { lastName: 'Doe' }; // Missing firstName
+
+            await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow('PUT requires complete object: firstName and lastName are required');
+        });
+
+        test('should throw error when lastName is missing (PUT validation)', async () => {
+            const updateData = { firstName: 'Johnny' }; // Missing lastName
+
+            await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow('PUT requires complete object: firstName and lastName are required');
+        });
+
+        test('should throw error when both fields are missing (PUT validation)', async () => {
+            const updateData = {}; // Missing both fields
+
+            await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow('PUT requires complete object: firstName and lastName are required');
+        });
+    });
+
+    describe('updatePartial', () => {
+        test('should update only firstName', async () => {
+            const updates = { firstName: 'Johnny' };
+
+            const result = await authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates);
+
+            expect(result).toBe(true);
+            expect(mockAuthors[0]).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'Johnny', // Updated
+                lastName: 'Doe', // Unchanged
+            });
+        });
+
+        test('should update only lastName', async () => {
+            const updates = { lastName: 'Brown' };
+
+            const result = await authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates);
+
+            expect(result).toBe(true);
+            expect(mockAuthors[0]).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'John', // Unchanged
+                lastName: 'Brown', // Updated
+            });
+        });
+
+        test('should update both firstName and lastName', async () => {
+            const updates = { firstName: 'Johnny', lastName: 'Brown' };
+
+            const result = await authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates);
+
+            expect(result).toBe(true);
+            expect(mockAuthors[0]).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'Johnny', // Updated
+                lastName: 'Brown', // Updated
+            });
+        });
+
+        test('should handle empty updates object', async () => {
+            const originalAuthor = { ...mockAuthors[0] };
+            const updates = {};
+
+            const result = await authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates);
+
+            expect(result).toBe(true);
+            expect(mockAuthors[0]).toEqual(originalAuthor); // Unchanged
+        });
+
+        test('should return false when author not found', async () => {
+            const updates = { firstName: 'Johnny' };
+
+            const result = await authorsService.updatePartial('00000000-0000-0000-0000-000000000000', updates);
+
+            expect(result).toBe(false);
+        });
+
+        test('should throw error when partial update creates duplicate name', async () => {
+            // Try to change John Doe to Jane Smith (which already exists)
+            const updates = { firstName: 'Jane', lastName: 'Smith' };
+
+            await expect(authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates)).rejects.toThrow('Another author with this name already exists');
+        });
+
+        test('should allow updating firstName when result is not duplicate', async () => {
+            // Try to change John Doe's firstName to Jane (making it Jane Doe, different from Jane Smith)
+            const updates = { firstName: 'Jane' };
+
+            const result = await authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates);
+
+            expect(result).toBe(true);
+            expect(mockAuthors[0]).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'Jane',
+                lastName: 'Doe',
+            });
+        });
+
+        test('should allow updating to same values', async () => {
+            // Update to current values should be allowed
+            const updates = { firstName: 'John', lastName: 'Doe' };
+
+            const result = await authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates);
+
+            expect(result).toBe(true);
+            expect(mockAuthors[0]).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'John',
+                lastName: 'Doe',
+            });
+        });
     });
 
     describe('remove', () => {
@@ -379,6 +645,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 date: '2024-01-01',
                 description: 'Description 1',
                 jacket: '/cover1.jpg',
+                shelf: 'd4e5f6g7-h8i9-0123-def0-234567890123',
             },
             {
                 id: 'f6g7h8i9-j0k1-2345-f012-456789012345',
@@ -388,25 +655,43 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 date: '2024-02-01',
                 description: 'Description 2',
                 jacket: '/cover2.jpg',
+                shelf: null,
             }
         );
     });
 
     describe('getMultiple', () => {
-        test('should return paginated books', async () => {
+        test('should return paginated books with author objects', async () => {
             const result = await booksService.getMultiple(1);
 
-            expect(result).toEqual({
-                data: mockBooks,
-                meta: { page: 1 },
+            expect(result.data).toHaveLength(2);
+            expect(result.data[0].author).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'John',
+                lastName: 'Doe',
             });
+            expect(result.meta).toEqual({ page: 1 });
         });
     });
+
     describe('getById', () => {
-        test('should return book when found', async () => {
+        test('should return book with author object when found', async () => {
             const result = await booksService.getById('e5f6g7h8-i9j0-1234-ef01-345678901234');
 
-            expect(result).toEqual(mockBooks[0]);
+            expect(result.title).toBe('Book 1');
+            expect(result.author).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'John',
+                lastName: 'Doe',
+            });
+            expect(result.shelf).toBe('d4e5f6g7-h8i9-0123-def0-234567890123');
+        });
+
+        test('should return book with null shelf when not on any shelf', async () => {
+            const result = await booksService.getById('f6g7h8i9-j0k1-2345-f012-456789012345');
+
+            expect(result.title).toBe('Book 2');
+            expect(result.shelf).toBeNull();
         });
 
         test('should return null when not found', async () => {
@@ -417,7 +702,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('create', () => {
-        test('should create new book successfully', async () => {
+        test('should create new book successfully with author ID string', async () => {
             const newBook = {
                 title: 'New Book',
                 date: '2025-01-01',
@@ -430,10 +715,39 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
             const result = await booksService.create(newBook);
 
             expect(result.title).toBe('New Book');
-            expect(result.author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+            expect(result.author).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'John',
+                lastName: 'Doe',
+            });
+            expect(result.shelf).toBeNull(); // Should include shelf field
             expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockBooks).toHaveLength(3);
         });
+
+        test('should create new book successfully with author object', async () => {
+            const newBook = {
+                title: 'New Book 2',
+                date: '2025-01-01',
+                author: { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' },
+                description: 'New Description 2',
+                isbn: '2222222222222',
+                jacket: '/new-cover2.jpg',
+            };
+
+            const result = await booksService.create(newBook);
+
+            expect(result.title).toBe('New Book 2');
+            expect(result.author).toEqual({
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                firstName: 'John',
+                lastName: 'Doe',
+            });
+            expect(result.shelf).toBeNull(); // Should include shelf field
+            expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+            expect(mockBooks).toHaveLength(3);
+        });
+
         test('should throw error when author does not exist', async () => {
             const newBook = {
                 title: 'Invalid Book',
@@ -442,6 +756,26 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
             };
 
             await expect(booksService.create(newBook)).rejects.toThrow('Author does not exist');
+        });
+
+        test('should throw error when author object has invalid ID', async () => {
+            const newBook = {
+                title: 'Invalid Book',
+                author: { id: '00000000-0000-0000-0000-000000000000' },
+                isbn: '1111111111111',
+            };
+
+            await expect(booksService.create(newBook)).rejects.toThrow('Author does not exist');
+        });
+
+        test('should throw error when author ID is missing', async () => {
+            const newBook = {
+                title: 'Invalid Book',
+                author: {},
+                isbn: '1111111111111',
+            };
+
+            await expect(booksService.create(newBook)).rejects.toThrow('Author ID is required');
         });
 
         test('should throw error when ISBN already exists', async () => {
@@ -456,34 +790,223 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('update', () => {
-        test('should update book successfully', async () => {
-            const updateData = { title: 'Updated Book Title' };
+        test('should update book successfully with complete object including shelf', async () => {
+            const updateData = {
+                title: 'Updated Book Title',
+                date: '2024-01-01',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                description: 'Updated description',
+                isbn: '9999999999999',
+                jacket: '/covers/updated.jpg',
+                shelf: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
+            };
 
             const result = await booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData);
+
             expect(result).toBe(true);
+            expect(mockBooks[0].shelf).toBe('e5f6g7h8-i9j0-1234-ef01-345678901234');
             expect(mockBooks[0].title).toBe('Updated Book Title');
         });
 
+        test('should update book successfully and set shelf to null', async () => {
+            const updateData = {
+                title: 'Updated Book Title 2',
+                date: '2024-01-01',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                description: 'Updated description',
+                isbn: '8888888888888',
+                jacket: '/covers/updated.jpg',
+                shelf: null,
+            };
+
+            const result = await booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].shelf).toBeNull();
+        });
+
+        test('should update book successfully with author object format', async () => {
+            const updateData = {
+                title: 'Updated Book Title 2',
+                date: '2024-02-01',
+                author: { id: 'b2c3d4e5-f6g7-8901-bcde-f12345678901' },
+                description: 'Updated description 2',
+                isbn: '8888888888888',
+                jacket: '/covers/updated2.jpg',
+            };
+
+            const result = await booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].author).toBe('b2c3d4e5-f6g7-8901-bcde-f12345678901'); // Stored as ID
+            expect(mockBooks[0].title).toBe('Updated Book Title 2');
+        });
+
+        test('should throw error when author object has no ID', async () => {
+            const updateData = {
+                title: 'Updated Title',
+                date: '2024-01-01',
+                author: {},
+                description: 'Updated description',
+                isbn: '9999999999999',
+            };
+
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, date, author, description, and isbn are required');
+        });
+
         test('should return false when book not found', async () => {
-            const updateData = { title: 'Updated Title' };
+            const updateData = {
+                title: 'Updated Title',
+                date: '2024-01-01',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                description: 'Updated description',
+                isbn: '9999999999999',
+            };
 
             const result = await booksService.update('00000000-0000-0000-0000-000000000000', updateData);
 
             expect(result).toBe(false);
         });
 
+        test('should throw error when title is missing (PUT validation)', async () => {
+            const updateData = {
+                date: '2024-01-01',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                description: 'Updated description',
+                isbn: '9999999999999',
+            };
+
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, date, author, description, and isbn are required');
+        });
+
         test('should throw error when author does not exist', async () => {
             const updateData = {
+                title: 'Updated Title',
+                date: '2024-01-01',
                 author: '00000000-0000-0000-0000-000000000000',
+                description: 'Updated description',
+                isbn: '9999999999999',
             };
 
             await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('Author does not exist');
         });
 
         test('should throw error when ISBN already exists', async () => {
-            const updateData = { isbn: '9876543210987' }; // Existing ISBN from book 2
+            const updateData = {
+                title: 'Updated Title',
+                date: '2024-01-01',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                description: 'Updated description',
+                isbn: '9876543210987', // Existing ISBN from book 2
+            };
 
-            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('Another book with this ISBN already exists');
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('Book with this ISBN already exists');
+        });
+    });
+
+    describe('updatePartial', () => {
+        test('should update only title', async () => {
+            const updates = { title: 'Partially Updated Title' };
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].title).toBe('Partially Updated Title');
+            expect(mockBooks[0].author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890'); // Unchanged
+        });
+
+        test('should update multiple fields', async () => {
+            const updates = {
+                title: 'New Title',
+                description: 'New Description',
+            };
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].title).toBe('New Title');
+            expect(mockBooks[0].description).toBe('New Description');
+            expect(mockBooks[0].author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890'); // Unchanged
+        });
+
+        test('should handle empty updates object', async () => {
+            const originalBook = { ...mockBooks[0] };
+            const updates = {};
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0]).toEqual(originalBook); // Unchanged
+        });
+
+        test('should return false when book not found', async () => {
+            const updates = { title: 'New Title' };
+
+            const result = await booksService.updatePartial('00000000-0000-0000-0000-000000000000', updates);
+
+            expect(result).toBe(false);
+        });
+
+        test('should throw error when partial author update is invalid', async () => {
+            const updates = { author: '00000000-0000-0000-0000-000000000000' };
+
+            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Author does not exist');
+        });
+
+        test('should throw error when partial ISBN update creates duplicate', async () => {
+            const updates = { isbn: '9876543210987' }; // Existing ISBN from book 2
+
+            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Book with this ISBN already exists');
+        });
+
+        test('should update author with ID string', async () => {
+            const updates = { author: 'b2c3d4e5-f6g7-8901-bcde-f12345678901' };
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].author).toBe('b2c3d4e5-f6g7-8901-bcde-f12345678901');
+        });
+
+        test('should update author with object format', async () => {
+            const updates = { author: { id: 'b2c3d4e5-f6g7-8901-bcde-f12345678901' } };
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].author).toBe('b2c3d4e5-f6g7-8901-bcde-f12345678901');
+        });
+
+        test('should throw error when author object has no ID', async () => {
+            const updates = { author: {} };
+
+            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Author ID is required');
+        });
+
+        test('should throw error when author object has invalid ID', async () => {
+            const updates = { author: { id: '00000000-0000-0000-0000-000000000000' } };
+
+            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Author does not exist');
+        });
+
+        test('should update shelf field only', async () => {
+            const updates = { shelf: 'f6g7h8i9-j0k1-2345-f012-456789012345' };
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].shelf).toBe('f6g7h8i9-j0k1-2345-f012-456789012345');
+            expect(mockBooks[0].title).toBe('Book 1'); // Unchanged
+        });
+
+        test('should set shelf to null via partial update', async () => {
+            const updates = { shelf: null };
+
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates);
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].shelf).toBeNull();
+            expect(mockBooks[0].title).toBe('Book 1'); // Unchanged
         });
     });
 
@@ -538,6 +1061,31 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
         // Reset mock data before each test
         mockShelves.length = 0;
         mockShelves.push({ id: 'd4e5f6g7-h8i9-0123-def0-234567890123' }, { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234' }, { id: 'f6g7h8i9-j0k1-2345-f012-456789012345' });
+
+        // Also reset books data to ensure clean state for shelf tests
+        mockBooks.length = 0;
+        mockBooks.push(
+            {
+                id: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
+                title: 'Book 1',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                isbn: '1234567890123',
+                date: '2024-01-01',
+                description: 'Description 1',
+                jacket: '/cover1.jpg',
+                shelf: null, // No shelf assigned for clean shelf tests
+            },
+            {
+                id: 'f6g7h8i9-j0k1-2345-f012-456789012345',
+                title: 'Book 2',
+                author: 'b2c3d4e5-f6g7-8901-bcde-f12345678901',
+                isbn: '9876543210987',
+                date: '2024-02-01',
+                description: 'Description 2',
+                jacket: '/cover2.jpg',
+                shelf: null,
+            }
+        );
     });
 
     describe('getMultiple', () => {
@@ -590,46 +1138,53 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
         test('should update shelf successfully', async () => {
             const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123');
 
-            expect(result).toEqual({
-                message: 'Shelf updated successfully',
-            });
+            expect(result).toBe(true);
         });
 
-        test('should return error when shelf not found', async () => {
+        test('should return false when shelf not found', async () => {
             const result = await shelvesService.update('00000000-0000-0000-0000-000000000000');
 
-            expect(result).toEqual({
-                message: 'Error in updating shelf',
-            });
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('updatePartial', () => {
+        test('should update shelf successfully (no-op for now)', async () => {
+            const updates = {};
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+        });
+
+        test('should return false when shelf not found', async () => {
+            const updates = {};
+
+            const result = await shelvesService.updatePartial('00000000-0000-0000-0000-000000000000', updates);
+
+            expect(result).toBe(false);
         });
     });
 
     describe('remove', () => {
         test('should delete shelf successfully', async () => {
-            const result = await shelvesService.remove('d4e5f6g7-h8i9-0123-def0-234567890123');
+            const result = await shelvesService.remove('e5f6g7h8-i9j0-1234-ef01-345678901234'); // Use a shelf that has no books
 
-            expect(result).toEqual({
-                message: 'Shelf deleted successfully',
-            });
+            expect(result).toBe(true);
             expect(mockShelves).toHaveLength(2);
-            expect(mockShelves.find(s => s.id === 'd4e5f6g7-h8i9-0123-def0-234567890123')).toBeUndefined();
+            expect(mockShelves.find(s => s.id === 'e5f6g7h8-i9j0-1234-ef01-345678901234')).toBeUndefined();
         });
 
-        test('should return error when shelf not found', async () => {
+        test('should return false when shelf not found', async () => {
             const result = await shelvesService.remove('00000000-0000-0000-0000-000000000000');
 
-            expect(result).toEqual({
-                message: 'Error in deleting shelf',
-            });
+            expect(result).toBe(false);
             expect(mockShelves).toHaveLength(3);
         });
+
         test('should throw error when shelf contains books', async () => {
-            // Add a book with shelf reference
-            mockBooks.push({
-                id: 'test-book-uuid',
-                title: 'Test Book',
-                shelf: 'd4e5f6g7-h8i9-0123-def0-234567890123',
-            });
+            // Assign a book to the shelf before trying to delete it
+            mockBooks[0].shelf = 'd4e5f6g7-h8i9-0123-def0-234567890123';
 
             await expect(shelvesService.remove('d4e5f6g7-h8i9-0123-def0-234567890123')).rejects.toThrow('Cannot delete shelf: it contains books');
         });

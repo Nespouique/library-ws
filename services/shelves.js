@@ -35,6 +35,19 @@ async function update(id, _shelf) {
     return result.affectedRows > 0;
 }
 
+async function updatePartial(id, _updates) {
+    // For now, there's nothing to update since we only have ID
+    // Future: could update properties like name, location, wled_segment, etc.
+    const current = await getById(id);
+    if (!current) {
+        return false;
+    }
+
+    // Since we only have ID and no other updatable fields,
+    // any partial update is essentially a no-op but successful
+    return true;
+}
+
 async function remove(id) {
     // Check if shelf is referenced by any books
     const books = await db.query('SELECT COUNT(*) as count FROM Books WHERE shelf = ?', [id]);
@@ -53,5 +66,6 @@ export default {
     getById,
     create,
     update,
+    updatePartial,
     remove,
 };

@@ -51,6 +51,156 @@ const options = {
                         },
                     },
                 },
+                Author: {
+                    type: 'object',
+                    required: ['firstName', 'lastName'],
+                    properties: {
+                        id: {
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'The UUID of the author',
+                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                        },
+                        firstName: {
+                            type: 'string',
+                            description: 'Author first name',
+                            example: 'Victor',
+                        },
+                        lastName: {
+                            type: 'string',
+                            description: 'Author last name',
+                            example: 'HUGO',
+                        },
+                    },
+                },
+                BookInput: {
+                    type: 'object',
+                    required: ['title', 'author', 'isbn'],
+                    properties: {
+                        title: {
+                            type: 'string',
+                            description: 'Book title',
+                            example: 'Les Misérables',
+                        },
+                        author: {
+                            oneOf: [
+                                {
+                                    type: 'string',
+                                    format: 'uuid',
+                                    description: 'Author UUID',
+                                    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                                },
+                                {
+                                    type: 'object',
+                                    properties: {
+                                        id: {
+                                            type: 'string',
+                                            format: 'uuid',
+                                            description: 'Author UUID',
+                                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                                        },
+                                    },
+                                    required: ['id'],
+                                },
+                            ],
+                            description: 'Author ID as string or object with id property',
+                        },
+                        isbn: {
+                            type: 'string',
+                            description: 'ISBN-13 code',
+                            example: '9782253096337',
+                        },
+                        date: {
+                            type: 'string',
+                            format: 'date',
+                            description: 'Publication date',
+                            example: '1998-12-02',
+                        },
+                        description: {
+                            type: 'string',
+                            description: 'Book description',
+                            example: 'Les Misérables is a French historical novel by Victor Hugo...',
+                        },
+                        jacket: {
+                            type: 'string',
+                            description: 'Cover image URL',
+                            example: '/covers/les-miserables.jpg',
+                        },
+                        shelf: {
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'Shelf UUID in library (optional)',
+                            example: 'c3d4e5f6-g7h8-9012-cdef-123456789012',
+                        },
+                    },
+                },
+                BookResponse: {
+                    type: 'object',
+                    properties: {
+                        id: {
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'The UUID of the book',
+                            example: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
+                        },
+                        title: {
+                            type: 'string',
+                            description: 'Book title',
+                            example: 'Les Misérables',
+                        },
+                        author: {
+                            type: 'object',
+                            properties: {
+                                id: {
+                                    type: 'string',
+                                    format: 'uuid',
+                                    description: 'Author UUID',
+                                    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                                },
+                                firstName: {
+                                    type: 'string',
+                                    description: 'Author first name',
+                                    example: 'Victor',
+                                },
+                                lastName: {
+                                    type: 'string',
+                                    description: 'Author last name',
+                                    example: 'HUGO',
+                                },
+                            },
+                            required: ['id', 'firstName', 'lastName'],
+                            description: 'Complete author information',
+                        },
+                        isbn: {
+                            type: 'string',
+                            description: 'ISBN-13 code',
+                            example: '9782253096337',
+                        },
+                        date: {
+                            type: 'string',
+                            format: 'date',
+                            description: 'Publication date',
+                            example: '1998-12-02',
+                        },
+                        description: {
+                            type: 'string',
+                            description: 'Book description',
+                            example: 'Les Misérables is a French historical novel by Victor Hugo...',
+                        },
+                        jacket: {
+                            type: 'string',
+                            description: 'Cover image URL',
+                            example: '/covers/les-miserables.jpg',
+                        },
+                        shelf: {
+                            type: 'string',
+                            format: 'uuid',
+                            nullable: true,
+                            description: 'Shelf UUID in library (null if not on any shelf)',
+                            example: 'c3d4e5f6-g7h8-9012-cdef-123456789012',
+                        },
+                    },
+                },
                 Book: {
                     type: 'object',
                     required: ['title', 'author', 'isbn'],
@@ -67,10 +217,19 @@ const options = {
                             example: 'Les Misérables',
                         },
                         author: {
-                            type: 'string',
-                            format: 'uuid',
-                            description: 'Author UUID (foreign key)',
-                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                            oneOf: [
+                                {
+                                    type: 'string',
+                                    format: 'uuid',
+                                    description: 'Author UUID (for input)',
+                                    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                                },
+                                {
+                                    $ref: '#/components/schemas/Author',
+                                    description: 'Author object (for output)',
+                                },
+                            ],
+                            description: 'Author information - can be UUID for input or full object for output',
                         },
                         isbn: {
                             type: 'string',
@@ -148,7 +307,7 @@ const options = {
                         data: {
                             type: 'array',
                             items: {
-                                $ref: '#/components/schemas/Book',
+                                $ref: '#/components/schemas/BookResponse',
                             },
                         },
                         meta: {

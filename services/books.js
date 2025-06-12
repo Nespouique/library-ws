@@ -58,7 +58,7 @@ async function create(book) {
         ]
     );
 
-    return { id: result.insertId, ...book };
+    return { id: bookId, ...book };
 }
 
 async function update(id, book) {

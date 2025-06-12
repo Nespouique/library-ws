@@ -33,7 +33,7 @@ async function create(shelf) {
         shelfId,
     ]);
 
-    return { id: result.insertId, ...shelf };
+    return { id: shelfId, ...shelf };
 }
 
 async function update(id, _shelf) {

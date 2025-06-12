@@ -39,7 +39,7 @@ async function create(author) {
         [authorId, author.firstName, author.lastName]
     );
 
-    return { id: result.insertId, ...author };
+    return { id: authorId, ...author };
 }
 
 async function update(id, author) {

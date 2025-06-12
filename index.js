@@ -40,6 +40,12 @@ app.get('/', (req, res) => {
     res.json({ message: 'ok' });
 });
 
+// Swagger JSON endpoint for external tools (Postman, etc.)
+app.get('/api-docs/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(specs);
+});
+
 // Swagger documentation endpoint
 app.use(
     '/api-docs',

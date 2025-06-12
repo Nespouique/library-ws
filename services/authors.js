@@ -1,4 +1,4 @@
-import db from './db.js';
+import db from './db-pool.js';
 import { getOffset, emptyOrRows } from '../utils/helper.js';
 import config from '../config/config.js';
 

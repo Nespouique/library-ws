@@ -3,6 +3,35 @@ import authors from '../services/authors.js';
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /authors:
+ *   get:
+ *     summary: Get all authors with pagination
+ *     description: Retrieve a paginated list of all authors in the library
+ *     tags: [Authors]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved authors
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedAuthors'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET authors (paginated)
 router.get('/', async function (req, res, next) {
     try {
@@ -13,6 +42,40 @@ router.get('/', async function (req, res, next) {
     }
 });
 
+/**
+ * @swagger
+ * /authors/{id}:
+ *   get:
+ *     summary: Get author by ID
+ *     description: Retrieve a specific author by their ID
+ *     tags: [Authors]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Author ID
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Author'
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET author by id
 router.get('/:id', async function (req, res, next) {
     try {
@@ -25,6 +88,54 @@ router.get('/:id', async function (req, res, next) {
     }
 });
 
+/**
+ * @swagger
+ * /authors:
+ *   post:
+ *     summary: Create a new author
+ *     description: Add a new author to the library
+ *     tags: [Authors]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: Author first name
+ *                 example: Victor
+ *               lastName:
+ *                 type: string
+ *                 description: Author last name
+ *                 example: HUGO
+ *     responses:
+ *       201:
+ *         description: Author created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Author'
+ *       409:
+ *         description: Author already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // CREATE author
 router.post('/', async function (req, res, next) {
     try {
@@ -35,6 +146,65 @@ router.post('/', async function (req, res, next) {
     }
 });
 
+/**
+ * @swagger
+ * /authors/{id}:
+ *   put:
+ *     summary: Update an author
+ *     description: Update an existing author's information
+ *     tags: [Authors]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Author ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: Author first name
+ *                 example: Victor
+ *               lastName:
+ *                 type: string
+ *                 description: Author last name
+ *                 example: HUGO
+ *     responses:
+ *       200:
+ *         description: Author updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Author updated
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Another author with this name already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // UPDATE author
 router.put('/:id', async function (req, res, next) {
     try {
@@ -47,6 +217,44 @@ router.put('/:id', async function (req, res, next) {
     }
 });
 
+/**
+ * @swagger
+ * /authors/{id}:
+ *   delete:
+ *     summary: Delete an author
+ *     description: Remove an author from the library
+ *     tags: [Authors]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Author ID
+ *     responses:
+ *       200:
+ *         description: Author deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Author deleted
+ *       404:
+ *         description: Author not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // DELETE author
 router.delete('/:id', async function (req, res, next) {
     try {

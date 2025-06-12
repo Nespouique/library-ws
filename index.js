@@ -2,6 +2,8 @@ import express from 'express';
 import books from './routes/books.js';
 import authors from './routes/authors.js';
 import dotenv from 'dotenv';
+import { specs, swaggerUi } from './config/swagger.js';
+
 dotenv.config();
 
 const app = express();
@@ -13,9 +15,40 @@ app.use(
         extended: true,
     })
 );
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Health check endpoint
+ *     description: Returns a simple OK message to verify the API is running
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is running successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: ok
+ */
 app.get('/', (req, res) => {
     res.json({ message: 'ok' });
 });
+
+// Swagger documentation endpoint
+app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(specs, {
+        explorer: true,
+        customSiteTitle: 'Library API Documentation',
+    })
+);
+
 app.use('/books', books);
 app.use('/authors', authors);
 

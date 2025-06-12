@@ -46,23 +46,26 @@ router.get('/', async function (req, res, next) {
  * @swagger
  * /authors/{id}:
  *   get:
- *     summary: Get author by ID
- *     description: Retrieve a specific author by their ID
+ *     summary: Get author by UUID
+ *     description: Retrieve a specific author by their UUID
  *     tags: [Authors]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Author ID
- *     responses:
+ *           type: string
+ *           format: uuid
+ *         description: Author UUID *     responses:
  *       200:
  *         description: Successfully retrieved author
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Author'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Author'
  *       404:
  *         description: Author not found
  *         content:
@@ -158,8 +161,9 @@ router.post('/', async function (req, res, next) {
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Author ID
+ *           type: string
+ *           format: uuid
+ *         description: Author UUID
  *     requestBody:
  *       required: true
  *       content:
@@ -229,8 +233,9 @@ router.put('/:id', async function (req, res, next) {
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Author ID
+ *           type: string
+ *           format: uuid
+ *         description: Author UUID
  *     responses:
  *       200:
  *         description: Author deleted successfully

@@ -2,27 +2,27 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
 import { getOffset, emptyOrRows } from '../utils/helper.js';
 
-// Mock data for testing
+// Mock data for testing with UUIDs
 const mockAuthors = [
-    { id: 1, firstName: 'John', lastName: 'Doe' },
-    { id: 2, firstName: 'Jane', lastName: 'Smith' },
-    { id: 3, firstName: 'Bob', lastName: 'Johnson' },
+    { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', firstName: 'John', lastName: 'Doe' },
+    { id: 'b2c3d4e5-f6g7-8901-bcde-f12345678901', firstName: 'Jane', lastName: 'Smith' },
+    { id: 'c3d4e5f6-g7h8-9012-cdef-123456789012', firstName: 'Bob', lastName: 'Johnson' },
 ];
 
 const mockBooks = [
     {
-        id: 1,
+        id: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
         title: 'Book 1',
-        author: 1,
+        author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
         isbn: '1234567890123',
         date: '2024-01-01',
         description: 'Description 1',
         jacket: '/cover1.jpg',
     },
     {
-        id: 2,
+        id: 'f6g7h8i9-j0k1-2345-f012-456789012345',
         title: 'Book 2',
-        author: 2,
+        author: 'b2c3d4e5-f6g7-8901-bcde-f12345678901',
         isbn: '9876543210987',
         date: '2024-02-01',
         description: 'Description 2',
@@ -30,7 +30,20 @@ const mockBooks = [
     },
 ];
 
-const mockShelves = [{ id: 1 }, { id: 2 }, { id: 3 }];
+const mockShelves = [
+    { id: 'd4e5f6g7-h8i9-0123-def0-234567890123' }, 
+    { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234' }, 
+    { id: 'f6g7h8i9-j0k1-2345-f012-456789012345' }
+];
+
+// Generate UUID-like string for testing
+function generateTestUuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
 
 // Simple service implementations with mock data
 const authorsService = {
@@ -54,14 +67,13 @@ const authorsService = {
             a =>
                 a.firstName === author.firstName &&
                 a.lastName === author.lastName
-        );
-        if (existing) {
+        );        if (existing) {
             const error = new Error('Author already exists');
             error.statusCode = 409;
             throw error;
         }
 
-        const newId = Math.max(...mockAuthors.map(a => a.id)) + 1;
+        const newId = generateTestUuid();
         const newAuthor = { id: newId, ...author };
         mockAuthors.push(newAuthor);
         return newAuthor;
@@ -127,9 +139,7 @@ const booksService = {
             const error = new Error('Book with this ISBN already exists');
             error.statusCode = 409;
             throw error;
-        }
-
-        const newId = Math.max(...mockBooks.map(b => b.id)) + 1;
+        }        const newId = generateTestUuid();
         const newBook = { id: newId, ...book };
         mockBooks.push(newBook);
         return newBook;
@@ -189,10 +199,8 @@ const shelvesService = {
     async getById(id) {
         const shelf = mockShelves.find(s => s.id === id);
         return shelf || null;
-    },
-
-    async create() {
-        const newId = Math.max(...mockShelves.map(s => s.id)) + 1;
+    },    async create() {
+        const newId = generateTestUuid();
         const newShelf = { id: newId };
         mockShelves.push(newShelf);
         return { message: 'Shelf created successfully', id: newId };
@@ -220,14 +228,14 @@ const shelvesService = {
     },
 };
 
-describe('Authors Service - Unit Tests with Mock Data', () => {
+describe('Authors Service - Unit Tests with Mock Data (UUID)', () => {
     beforeEach(() => {
         // Reset mock data before each test
         mockAuthors.length = 0;
         mockAuthors.push(
-            { id: 1, firstName: 'John', lastName: 'Doe' },
-            { id: 2, firstName: 'Jane', lastName: 'Smith' },
-            { id: 3, firstName: 'Bob', lastName: 'Johnson' }
+            { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', firstName: 'John', lastName: 'Doe' },
+            { id: 'b2c3d4e5-f6g7-8901-bcde-f12345678901', firstName: 'Jane', lastName: 'Smith' },
+            { id: 'c3d4e5f6-g7h8-9012-cdef-123456789012', firstName: 'Bob', lastName: 'Johnson' }
         );
     });
 
@@ -239,9 +247,7 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
                 data: mockAuthors,
                 meta: { page: 1 },
             });
-        });
-
-        test('should handle empty results', async () => {
+        });        test('should handle empty results', async () => {
             mockAuthors.length = 0; // Clear mock data
 
             const result = await authorsService.getMultiple(1);
@@ -256,7 +262,7 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
             // Add more authors for pagination test
             for (let i = 4; i <= 15; i++) {
                 mockAuthors.push({
-                    id: i,
+                    id: generateTestUuid(),
                     firstName: `Author${i}`,
                     lastName: `Last${i}`,
                 });
@@ -274,33 +280,30 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
 
     describe('getById', () => {
         test('should return author when found', async () => {
-            const result = await authorsService.getById(1);
+            const result = await authorsService.getById('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
 
             expect(result).toEqual({
-                id: 1,
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 firstName: 'John',
                 lastName: 'Doe',
             });
         });
 
         test('should return null when not found', async () => {
-            const result = await authorsService.getById(999);
+            const result = await authorsService.getById('00000000-0000-0000-0000-000000000000');
 
             expect(result).toBeNull();
         });
     });
 
-    describe('create', () => {
-        test('should create new author successfully', async () => {
+    describe('create', () => {        test('should create new author successfully', async () => {
             const newAuthor = { firstName: 'Alice', lastName: 'Wonder' };
 
             const result = await authorsService.create(newAuthor);
 
-            expect(result).toEqual({
-                id: 4,
-                firstName: 'Alice',
-                lastName: 'Wonder',
-            });
+            expect(result.firstName).toBe('Alice');
+            expect(result.lastName).toBe('Wonder');
+            expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockAuthors).toHaveLength(4);
         });
 
@@ -311,17 +314,15 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
                 'Author already exists'
             );
         });
-    });
-
-    describe('update', () => {
+    });    describe('update', () => {
         test('should update author successfully', async () => {
             const updateData = { firstName: 'Johnny', lastName: 'Doe' };
 
-            const result = await authorsService.update(1, updateData);
+            const result = await authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData);
 
             expect(result).toBe(true);
             expect(mockAuthors[0]).toEqual({
-                id: 1,
+                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 firstName: 'Johnny',
                 lastName: 'Doe',
             });
@@ -330,7 +331,7 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
         test('should return false when author not found', async () => {
             const updateData = { firstName: 'Johnny', lastName: 'Doe' };
 
-            const result = await authorsService.update(999, updateData);
+            const result = await authorsService.update('00000000-0000-0000-0000-000000000000', updateData);
 
             expect(result).toBe(false);
         });
@@ -338,7 +339,7 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
         test('should throw error when duplicate name exists', async () => {
             const updateData = { firstName: 'Jane', lastName: 'Smith' }; // Existing name
 
-            await expect(authorsService.update(1, updateData)).rejects.toThrow(
+            await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow(
                 'Another author with this name already exists'
             );
         });
@@ -346,15 +347,15 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
 
     describe('remove', () => {
         test('should delete author successfully', async () => {
-            const result = await authorsService.remove(1);
+            const result = await authorsService.remove('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
 
             expect(result).toBe(true);
             expect(mockAuthors).toHaveLength(2);
-            expect(mockAuthors.find(a => a.id === 1)).toBeUndefined();
+            expect(mockAuthors.find(a => a.id === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890')).toBeUndefined();
         });
 
         test('should return false when author not found', async () => {
-            const result = await authorsService.remove(999);
+            const result = await authorsService.remove('00000000-0000-0000-0000-000000000000');
 
             expect(result).toBe(false);
             expect(mockAuthors).toHaveLength(3);
@@ -362,24 +363,24 @@ describe('Authors Service - Unit Tests with Mock Data', () => {
     });
 });
 
-describe('Books Service - Unit Tests with Mock Data', () => {
+describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
     beforeEach(() => {
         // Reset mock data before each test
         mockBooks.length = 0;
         mockBooks.push(
             {
-                id: 1,
+                id: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
                 title: 'Book 1',
-                author: 1,
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 isbn: '1234567890123',
                 date: '2024-01-01',
                 description: 'Description 1',
                 jacket: '/cover1.jpg',
             },
             {
-                id: 2,
+                id: 'f6g7h8i9-j0k1-2345-f012-456789012345',
                 title: 'Book 2',
-                author: 2,
+                author: 'b2c3d4e5-f6g7-8901-bcde-f12345678901',
                 isbn: '9876543210987',
                 date: '2024-02-01',
                 description: 'Description 2',
@@ -397,17 +398,15 @@ describe('Books Service - Unit Tests with Mock Data', () => {
                 meta: { page: 1 },
             });
         });
-    });
-
-    describe('getById', () => {
+    });    describe('getById', () => {
         test('should return book when found', async () => {
-            const result = await booksService.getById(1);
+            const result = await booksService.getById('e5f6g7h8-i9j0-1234-ef01-345678901234');
 
             expect(result).toEqual(mockBooks[0]);
         });
 
         test('should return null when not found', async () => {
-            const result = await booksService.getById(999);
+            const result = await booksService.getById('00000000-0000-0000-0000-000000000000');
 
             expect(result).toBeNull();
         });
@@ -418,7 +417,7 @@ describe('Books Service - Unit Tests with Mock Data', () => {
             const newBook = {
                 title: 'New Book',
                 date: '2025-01-01',
-                author: 1,
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 description: 'New Description',
                 isbn: '1111111111111',
                 jacket: '/new-cover.jpg',
@@ -426,14 +425,14 @@ describe('Books Service - Unit Tests with Mock Data', () => {
 
             const result = await booksService.create(newBook);
 
-            expect(result).toEqual({ id: 3, ...newBook });
+            expect(result.title).toBe('New Book');
+            expect(result.author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+            expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockBooks).toHaveLength(3);
-        });
-
-        test('should throw error when author does not exist', async () => {
+        });        test('should throw error when author does not exist', async () => {
             const newBook = {
                 title: 'Invalid Book',
-                author: 999,
+                author: '00000000-0000-0000-0000-000000000000',
                 isbn: '1111111111111',
             };
 
@@ -445,7 +444,7 @@ describe('Books Service - Unit Tests with Mock Data', () => {
         test('should throw error when ISBN already exists', async () => {
             const newBook = {
                 title: 'Duplicate ISBN Book',
-                author: 1,
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 isbn: '1234567890123', // Existing ISBN
             };
 
@@ -459,24 +458,22 @@ describe('Books Service - Unit Tests with Mock Data', () => {
         test('should update book successfully', async () => {
             const updateData = { title: 'Updated Book Title' };
 
-            const result = await booksService.update(1, updateData);
-
-            expect(result).toBe(true);
+            const result = await booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData);            expect(result).toBe(true);
             expect(mockBooks[0].title).toBe('Updated Book Title');
         });
 
         test('should return false when book not found', async () => {
             const updateData = { title: 'Updated Title' };
 
-            const result = await booksService.update(999, updateData);
+            const result = await booksService.update('00000000-0000-0000-0000-000000000000', updateData);
 
             expect(result).toBe(false);
         });
 
         test('should throw error when author does not exist', async () => {
-            const updateData = { author: 999 };
+            const updateData = { author: '00000000-0000-0000-0000-000000000000' };
 
-            await expect(booksService.update(1, updateData)).rejects.toThrow(
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow(
                 'Author does not exist'
             );
         });
@@ -484,23 +481,22 @@ describe('Books Service - Unit Tests with Mock Data', () => {
         test('should throw error when ISBN already exists', async () => {
             const updateData = { isbn: '9876543210987' }; // Existing ISBN from book 2
 
-            await expect(booksService.update(1, updateData)).rejects.toThrow(
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow(
                 'Another book with this ISBN already exists'
             );
         });
     });
 
-    describe('remove', () => {
-        test('should delete book successfully', async () => {
-            const result = await booksService.remove(1);
+    describe('remove', () => {        test('should delete book successfully', async () => {
+            const result = await booksService.remove('e5f6g7h8-i9j0-1234-ef01-345678901234');
 
             expect(result).toBe(true);
             expect(mockBooks).toHaveLength(1);
-            expect(mockBooks.find(b => b.id === 1)).toBeUndefined();
+            expect(mockBooks.find(b => b.id === 'e5f6g7h8-i9j0-1234-ef01-345678901234')).toBeUndefined();
         });
 
         test('should return false when book not found', async () => {
-            const result = await booksService.remove(999);
+            const result = await booksService.remove('00000000-0000-0000-0000-000000000000');
 
             expect(result).toBe(false);
             expect(mockBooks).toHaveLength(2);
@@ -521,13 +517,13 @@ describe('Helper Functions', () => {
         expect(emptyOrRows(null)).toEqual([]);
         expect(emptyOrRows(undefined)).toEqual([]);
         expect(emptyOrRows([])).toEqual([]);
-        expect(emptyOrRows([1, 2, 3])).toEqual([1, 2, 3]);
-        expect(emptyOrRows(['a', 'b'])).toEqual(['a', 'b']);
+        expect(emptyOrRows([1, 2, 3])).toEqual([1, 2, 3]);        expect(emptyOrRows(['a', 'b'])).toEqual(['a', 'b']);
     });
+    
     test('emptyOrRows should preserve object properties', () => {
         const testData = [
-            { id: 1, name: 'Test' },
-            { id: 2, name: 'Test2' },
+            { id: 'test-uuid-1', name: 'Test' },
+            { id: 'test-uuid-2', name: 'Test2' },
         ];
 
         expect(emptyOrRows(testData)).toEqual(testData);
@@ -535,11 +531,15 @@ describe('Helper Functions', () => {
     });
 });
 
-describe('Shelves Service - Unit Tests with Mock Data', () => {
+describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
     beforeEach(() => {
         // Reset mock data before each test
         mockShelves.length = 0;
-        mockShelves.push({ id: 1 }, { id: 2 }, { id: 3 });
+        mockShelves.push(
+            { id: 'd4e5f6g7-h8i9-0123-def0-234567890123' }, 
+            { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234' }, 
+            { id: 'f6g7h8i9-j0k1-2345-f012-456789012345' }
+        );
     });
 
     describe('getMultiple', () => {
@@ -562,17 +562,17 @@ describe('Shelves Service - Unit Tests with Mock Data', () => {
                 meta: { page: 1 },
             });
         });
-    });
-
+    });    
+    
     describe('getById', () => {
         test('should return shelf when found', async () => {
-            const result = await shelvesService.getById(1);
+            const result = await shelvesService.getById('d4e5f6g7-h8i9-0123-def0-234567890123');
 
-            expect(result).toEqual({ id: 1 });
+            expect(result).toEqual({ id: 'd4e5f6g7-h8i9-0123-def0-234567890123' });
         });
 
         test('should return null when not found', async () => {
-            const result = await shelvesService.getById(999);
+            const result = await shelvesService.getById('00000000-0000-0000-0000-000000000000');
 
             expect(result).toBeNull();
         });
@@ -580,20 +580,13 @@ describe('Shelves Service - Unit Tests with Mock Data', () => {
 
     describe('create', () => {
         test('should create new shelf successfully', async () => {
-            const result = await shelvesService.create();
-
-            expect(result).toEqual({
-                message: 'Shelf created successfully',
-                id: 4,
-            });
+            const result = await shelvesService.create();            expect(result.message).toBe('Shelf created successfully');
+            expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockShelves).toHaveLength(4);
-            expect(mockShelves[3]).toEqual({ id: 4 });
         });
-    });
-
-    describe('update', () => {
+    });    describe('update', () => {
         test('should update shelf successfully', async () => {
-            const result = await shelvesService.update(1);
+            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123');
 
             expect(result).toEqual({
                 message: 'Shelf updated successfully',
@@ -601,7 +594,7 @@ describe('Shelves Service - Unit Tests with Mock Data', () => {
         });
 
         test('should return error when shelf not found', async () => {
-            const result = await shelvesService.update(999);
+            const result = await shelvesService.update('00000000-0000-0000-0000-000000000000');
 
             expect(result).toEqual({
                 message: 'Error in updating shelf',
@@ -609,31 +602,32 @@ describe('Shelves Service - Unit Tests with Mock Data', () => {
         });
     });
 
-    describe('remove', () => {
-        test('should delete shelf successfully', async () => {
-            const result = await shelvesService.remove(1);
+    describe('remove', () => {        test('should delete shelf successfully', async () => {
+            const result = await shelvesService.remove('d4e5f6g7-h8i9-0123-def0-234567890123');
 
             expect(result).toEqual({
                 message: 'Shelf deleted successfully',
             });
             expect(mockShelves).toHaveLength(2);
-            expect(mockShelves.find(s => s.id === 1)).toBeUndefined();
+            expect(mockShelves.find(s => s.id === 'd4e5f6g7-h8i9-0123-def0-234567890123')).toBeUndefined();
         });
 
         test('should return error when shelf not found', async () => {
-            const result = await shelvesService.remove(999);
+            const result = await shelvesService.remove('00000000-0000-0000-0000-000000000000');
 
             expect(result).toEqual({
                 message: 'Error in deleting shelf',
             });
             expect(mockShelves).toHaveLength(3);
-        });
-
-        test('should throw error when shelf contains books', async () => {
+        });        test('should throw error when shelf contains books', async () => {
             // Add a book with shelf reference
-            mockBooks.push({ id: 3, title: 'Test Book', shelf: 1 });
+            mockBooks.push({ 
+                id: 'test-book-uuid', 
+                title: 'Test Book', 
+                shelf: 'd4e5f6g7-h8i9-0123-def0-234567890123' 
+            });
 
-            await expect(shelvesService.remove(1)).rejects.toThrow(
+            await expect(shelvesService.remove('d4e5f6g7-h8i9-0123-def0-234567890123')).rejects.toThrow(
                 'Cannot delete shelf: it contains books'
             );
         });

@@ -1,11 +1,12 @@
 import db from './db-pool.js';
 import { getOffset, emptyOrRows } from '../utils/helper.js';
 import config from '../config/config.js';
+import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple(page = 1) {
     const offset = getOffset(page, config.listPerPage);
     const rows = await db.query(
-        `SELECT B.id, B.title, B.date, CONCAT(A.firstName, ' ', A.lastName) as author, B.description, B.isbn, B.jacket
+        `SELECT B.id, B.title, DATE_FORMAT(B.date, '%Y-%m-%d') as date, CONCAT(A.firstName, ' ', A.lastName) as author, B.description, B.isbn, B.jacket
          FROM Books B JOIN Authors A ON A.id = B.author LIMIT ?, ?`,
         [offset, config.listPerPage]
     );
@@ -16,7 +17,7 @@ async function getMultiple(page = 1) {
 
 async function getById(id) {
     const rows = await db.query(
-        `SELECT B.id, B.title, B.date, CONCAT(A.firstName, ' ', A.lastName) as author, B.description, B.isbn, B.jacket
+        `SELECT B.id, B.title, DATE_FORMAT(B.date, '%Y-%m-%d') as date, CONCAT(A.firstName, ' ', A.lastName) as author, B.description, B.isbn, B.jacket
          FROM Books B JOIN Authors A ON A.id = B.author WHERE B.id = ?`,
         [id]
     );
@@ -42,17 +43,21 @@ async function create(book) {
         error.statusCode = 409;
         throw error;
     }
+    const bookId = uuidv4();
     const result = await db.query(
-        'INSERT INTO Books (title, date, author, description, isbn, jacket) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO Books (id, title, date, author, description, isbn, jacket, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
+            bookId,
             book.title,
             book.date,
             book.author,
             book.description,
             book.isbn,
             book.jacket,
+            book.shelf || null,
         ]
     );
+    
     return { id: result.insertId, ...book };
 }
 

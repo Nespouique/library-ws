@@ -46,23 +46,26 @@ router.get('/', async function (req, res, next) {
  * @swagger
  * /shelves/{id}:
  *   get:
- *     summary: Get shelf by ID
- *     description: Retrieve a specific shelf by its ID
+ *     summary: Get shelf by UUID
+ *     description: Retrieve a specific shelf by its UUID
  *     tags: [Shelves]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Shelf ID
- *     responses:
+ *           type: string
+ *           format: uuid
+ *         description: Shelf UUID *     responses:
  *       200:
  *         description: Successfully retrieved shelf
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Shelf'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/Shelf'
  *       404:
  *         description: Shelf not found
  *         content:
@@ -81,7 +84,7 @@ router.get('/:id', async function (req, res, next) {
     try {
         const shelf = await shelves.getById(req.params.id);
         if (!shelf) return res.status(404).json({ message: 'Shelf not found' });
-        res.json(shelf);
+        res.json({ data: shelf });
     } catch (err) {
         next(err);
     }
@@ -100,7 +103,7 @@ router.get('/:id', async function (req, res, next) {
  *         application/json:
  *           schema:
  *             type: object
- *             description: Empty object (shelf is created with auto-generated ID only)
+ *             description: Empty object (shelf is created with auto-generated UUID only)
  *             example: {}
  *     responses:
  *       201:
@@ -114,8 +117,9 @@ router.get('/:id', async function (req, res, next) {
  *                   type: string
  *                   example: Shelf created successfully
  *                 id:
- *                   type: integer
- *                   example: 3
+ *                   type: string
+ *                   format: uuid
+ *                   example: c3d4e5f6-g7h8-9012-cdef-123456789012
  *       400:
  *         description: Bad request
  *         content:
@@ -132,8 +136,8 @@ router.get('/:id', async function (req, res, next) {
 // POST shelf
 router.post('/', async function (req, res, next) {
     try {
-        const result = await shelves.create(req.body);
-        res.status(201).json(result);
+        const created = await shelves.create(req.body);
+        res.status(201).json({ data: created });
     } catch (err) {
         next(err);
     }
@@ -144,15 +148,16 @@ router.post('/', async function (req, res, next) {
  * /shelves/{id}:
  *   put:
  *     summary: Update a shelf
- *     description: Update a shelf by ID (currently no updatable fields, used for validation)
+ *     description: Update a shelf by UUID (currently no updatable fields, used for validation)
  *     tags: [Shelves]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Shelf ID
+ *           type: string
+ *           format: uuid
+ *         description: Shelf UUID
  *     requestBody:
  *       required: false
  *       content:
@@ -185,11 +190,13 @@ router.post('/', async function (req, res, next) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-// PUT shelf
+// UPDATE shelf
 router.put('/:id', async function (req, res, next) {
     try {
-        const result = await shelves.update(req.params.id, req.body);
-        res.json(result);
+        const updated = await shelves.update(req.params.id, req.body);
+        if (!updated)
+            return res.status(404).json({ message: 'Shelf not found' });
+        res.json({ message: 'Shelf updated' });
     } catch (err) {
         next(err);
     }
@@ -200,15 +207,16 @@ router.put('/:id', async function (req, res, next) {
  * /shelves/{id}:
  *   delete:
  *     summary: Delete a shelf
- *     description: Delete a shelf by ID (only if no books are assigned to it)
+ *     description: Delete a shelf by UUID (only if no books are assigned to it)
  *     tags: [Shelves]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Shelf ID
+ *           type: string
+ *           format: uuid
+ *         description: Shelf UUID
  *     responses:
  *       200:
  *         description: Shelf deleted successfully

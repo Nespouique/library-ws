@@ -1,6 +1,7 @@
 import db from './db-pool.js';
 import { getOffset, emptyOrRows } from '../utils/helper.js';
 import config from '../config/config.js';
+import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple(page = 1) {
     const offset = getOffset(page, config.listPerPage);
@@ -32,10 +33,12 @@ async function create(author) {
         error.statusCode = 409;
         throw error;
     }
+    const authorId = uuidv4();
     const result = await db.query(
-        'INSERT INTO Authors (firstName, lastName) VALUES (?, ?)',
-        [author.firstName, author.lastName]
+        'INSERT INTO Authors (id, firstName, lastName) VALUES (?, ?, ?)',
+        [authorId, author.firstName, author.lastName]
     );
+    
     return { id: result.insertId, ...author };
 }
 

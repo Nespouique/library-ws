@@ -45,16 +45,17 @@ router.get('/', async function (req, res, next) {
  * @swagger
  * /books/{id}:
  *   get:
- *     summary: Get book by ID
- *     description: Retrieve a specific book by its ID
+ *     summary: Get book by UUID
+ *     description: Retrieve a specific book by its UUID
  *     tags: [Books]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Book ID
+ *           type: string
+ *           format: uuid
+ *         description: Book UUID
  *     responses:
  *       200:
  *         description: Successfully retrieved book
@@ -112,9 +113,10 @@ router.get('/:id', async function (req, res, next) {
  *                 description: Book title
  *                 example: Les Misérables
  *               author:
- *                 type: integer
- *                 description: Author ID (must exist)
- *                 example: 1
+ *                 type: string
+ *                 format: uuid
+ *                 description: Author UUID (must exist)
+ *                 example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
  *               isbn:
  *                 type: string
  *                 description: ISBN-13 code (must be unique)
@@ -132,6 +134,11 @@ router.get('/:id', async function (req, res, next) {
  *                 type: string
  *                 description: Cover image URL
  *                 example: "/covers/les-miserables.jpg"
+ *               shelf:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Shelf UUID
+ *                 example: c3d4e5f6-g7h8-9012-cdef-123456789012
  *     responses:
  *       201:
  *         description: Book created successfully
@@ -183,8 +190,9 @@ router.post('/', async function (req, res, next) {
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Book ID
+ *           type: string
+ *           format: uuid
+ *         description: Book UUID
  *     requestBody:
  *       required: true
  *       content:
@@ -197,9 +205,10 @@ router.post('/', async function (req, res, next) {
  *                 description: Book title
  *                 example: Les Misérables
  *               author:
- *                 type: integer
- *                 description: Author ID (must exist)
- *                 example: 1
+ *                 type: string
+ *                 format: uuid
+ *                 description: Author UUID (must exist)
+ *                 example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
  *               isbn:
  *                 type: string
  *                 description: ISBN-13 code (must be unique)
@@ -217,6 +226,11 @@ router.post('/', async function (req, res, next) {
  *                 type: string
  *                 description: Cover image URL
  *                 example: "/covers/les-miserables.jpg"
+ *               shelf:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Shelf UUID
+ *                 example: c3d4e5f6-g7h8-9012-cdef-123456789012
  *     responses:
  *       200:
  *         description: Book updated successfully
@@ -277,8 +291,9 @@ router.put('/:id', async function (req, res, next) {
  *         name: id
  *         required: true
  *         schema:
- *           type: integer
- *         description: Book ID
+ *           type: string
+ *           format: uuid
+ *         description: Book UUID
  *     responses:
  *       200:
  *         description: Book deleted successfully

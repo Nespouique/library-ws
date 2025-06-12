@@ -29,15 +29,15 @@ const options = {
             },
         ],
         components: {
-            schemas: {
-                Author: {
+            schemas: {                Author: {
                     type: 'object',
                     required: ['firstName', 'lastName'],
                     properties: {
                         id: {
-                            type: 'integer',
-                            description: 'The auto-generated id of the author',
-                            example: 1,
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'The UUID of the author',
+                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                         },
                         firstName: {
                             type: 'string',
@@ -56,9 +56,10 @@ const options = {
                     required: ['title', 'author', 'isbn'],
                     properties: {
                         id: {
-                            type: 'integer',
-                            description: 'The auto-generated id of the book',
-                            example: 1,
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'The UUID of the book',
+                            example: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
                         },
                         title: {
                             type: 'string',
@@ -66,9 +67,10 @@ const options = {
                             example: 'Les Misérables',
                         },
                         author: {
-                            type: 'integer',
-                            description: 'Author ID (foreign key)',
-                            example: 1,
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'Author UUID (foreign key)',
+                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                         },
                         isbn: {
                             type: 'string',
@@ -93,9 +95,10 @@ const options = {
                             example: '/covers/les-miserables.jpg',
                         },
                         shelf: {
-                            type: 'integer',
-                            description: 'Shelf number in library',
-                            example: 1,
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'Shelf UUID in library',
+                            example: 'c3d4e5f6-g7h8-9012-cdef-123456789012',
                         },
                     },
                 },
@@ -103,9 +106,10 @@ const options = {
                     type: 'object',
                     properties: {
                         id: {
-                            type: 'integer',
-                            description: 'The auto-generated id of the shelf',
-                            example: 1,
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'The UUID of the shelf',
+                            example: 'c3d4e5f6-g7h8-9012-cdef-123456789012',
                         },
                     },
                 },

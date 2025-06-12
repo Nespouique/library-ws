@@ -1,5 +1,6 @@
 import db from './db-pool.js';
 import { getOffset } from '../utils/helper.js';
+import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple(page = 1) {
     const listPerPage = 10;
@@ -24,18 +25,13 @@ async function getById(id) {
     return rows.length > 0 ? rows[0] : null;
 }
 
-async function create(_shelf) {
+async function create(shelf) {
     // For now, we only insert with auto-generated ID
     // Future: could add properties like name, location, wled_segment, etc.
-    const result = await db.query('INSERT INTO Shelves () VALUES ()');
+    const shelfId = uuidv4();
+    const result = await db.query('INSERT INTO Shelves (id) VALUES (?)', [shelfId]);
 
-    let message = 'Error in creating shelf';
-
-    if (result.affectedRows) {
-        message = 'Shelf created successfully';
-    }
-
-    return { message, id: result.insertId };
+    return { id: result.insertId, ...shelf };
 }
 
 async function update(id, _shelf) {
@@ -46,13 +42,7 @@ async function update(id, _shelf) {
         [id, id] // Dummy update to check if shelf exists
     );
 
-    let message = 'Error in updating shelf';
-
-    if (result.affectedRows) {
-        message = 'Shelf updated successfully';
-    }
-
-    return { message };
+    return result.affectedRows > 0;
 }
 
 async function remove(id) {

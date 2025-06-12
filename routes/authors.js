@@ -83,8 +83,7 @@ router.get('/', async function (req, res, next) {
 router.get('/:id', async function (req, res, next) {
     try {
         const author = await authors.getById(req.params.id);
-        if (!author)
-            return res.status(404).json({ message: 'Author not found' });
+        if (!author) return res.status(404).json({ message: 'Author not found' });
         res.json({ data: author });
     } catch (err) {
         next(err);
@@ -213,8 +212,7 @@ router.post('/', async function (req, res, next) {
 router.put('/:id', async function (req, res, next) {
     try {
         const updated = await authors.update(req.params.id, req.body);
-        if (!updated)
-            return res.status(404).json({ message: 'Author not found' });
+        if (!updated) return res.status(404).json({ message: 'Author not found' });
         res.json({ message: 'Author updated' });
     } catch (err) {
         next(err);
@@ -264,8 +262,7 @@ router.put('/:id', async function (req, res, next) {
 router.delete('/:id', async function (req, res, next) {
     try {
         const deleted = await authors.remove(req.params.id);
-        if (!deleted)
-            return res.status(404).json({ message: 'Author not found' });
+        if (!deleted) return res.status(404).json({ message: 'Author not found' });
         res.json({ message: 'Author deleted' });
     } catch (err) {
         next(err);

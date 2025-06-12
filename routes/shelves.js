@@ -194,8 +194,7 @@ router.post('/', async function (req, res, next) {
 router.put('/:id', async function (req, res, next) {
     try {
         const updated = await shelves.update(req.params.id, req.body);
-        if (!updated)
-            return res.status(404).json({ message: 'Shelf not found' });
+        if (!updated) return res.status(404).json({ message: 'Shelf not found' });
         res.json({ message: 'Shelf updated' });
     } catch (err) {
         next(err);
@@ -251,8 +250,7 @@ router.put('/:id', async function (req, res, next) {
 router.delete('/:id', async function (req, res, next) {
     try {
         const deleted = await shelves.remove(req.params.id);
-        if (!deleted)
-            return res.status(404).json({ message: 'Shelf not found' });
+        if (!deleted) return res.status(404).json({ message: 'Shelf not found' });
         res.json({ message: 'Shelf deleted' });
     } catch (err) {
         next(err);

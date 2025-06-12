@@ -7,8 +7,7 @@ const options = {
         info: {
             title: 'Library Web Service API',
             version: '1.0.0',
-            description:
-                'Node.js/Express REST API for library management with complete CRUD operations for books and authors. Designed for a future Android barcode scanning application.',
+            description: 'Node.js/Express REST API for library management with complete CRUD operations for books and authors. Designed for a future Android barcode scanning application.',
             contact: {
                 name: 'Library API Support',
                 email: 'support@library-api.com',
@@ -87,8 +86,7 @@ const options = {
                         description: {
                             type: 'string',
                             description: 'Book description',
-                            example:
-                                'Les Misérables is a French historical novel by Victor Hugo...',
+                            example: 'Les Misérables is a French historical novel by Victor Hugo...',
                         },
                         jacket: {
                             type: 'string',

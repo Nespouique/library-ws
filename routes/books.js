@@ -271,8 +271,7 @@ router.post('/', async function (req, res, next) {
 router.put('/:id', async function (req, res, next) {
     try {
         const updated = await books.update(req.params.id, req.body);
-        if (!updated)
-            return res.status(404).json({ message: 'Book not found' });
+        if (!updated) return res.status(404).json({ message: 'Book not found' });
         res.json({ message: 'Book updated' });
     } catch (err) {
         next(err);
@@ -322,8 +321,7 @@ router.put('/:id', async function (req, res, next) {
 router.delete('/:id', async function (req, res, next) {
     try {
         const deleted = await books.remove(req.params.id);
-        if (!deleted)
-            return res.status(404).json({ message: 'Book not found' });
+        if (!deleted) return res.status(404).json({ message: 'Book not found' });
         res.json({ message: 'Book deleted' });
     } catch (err) {
         next(err);

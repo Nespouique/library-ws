@@ -1,0 +1,13 @@
+# Ignore artifacts:
+node_modules
+package-lock.json
+.git
+
+# Ignore generated files:
+dist
+build
+coverage
+
+# Ignore config files that shouldn't be formatted:
+*.min.js
+*.bundle.js

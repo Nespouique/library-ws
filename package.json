@@ -1,21 +1,32 @@
 {
-  "name": "library-ws",
-  "version": "1.0.0",
-  "private": true,  
-  "scripts": {
-    "start": "node index.js",
-    "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --detectOpenHandles --forceExit",
-    "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --watch",
-    "validate": "npm test && echo '\n🎉 All tests passed! API is ready for production.'"
-  },
-  "dependencies": {
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "mysql2": "^3.14.1"
-  },
-  "devDependencies": {
-    "cross-env": "^7.0.3",
-    "jest": "^29.0.0"
-  },
-  "type": "module"
+    "name": "library-ws",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "node index.js",
+        "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --detectOpenHandles --forceExit",
+        "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --watch",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "quality": "npm run lint && npm run format:check",
+        "quality:fix": "npm run lint:fix && npm run format",
+        "validate": "npm run quality && npm test && echo '\n🎉 All tests passed! Code quality verified! API is ready for production.'"
+    },
+    "dependencies": {
+        "dotenv": "^16.5.0",
+        "express": "^5.1.0",
+        "mysql2": "^3.14.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.28.0",
+        "cross-env": "^7.0.3",
+        "eslint": "^9.28.0",
+        "eslint-config-prettier": "^10.1.5",
+        "eslint-plugin-prettier": "^5.4.1",
+        "jest": "^29.0.0",
+        "prettier": "^3.5.3"
+    },
+    "type": "module"
 }

@@ -6,7 +6,7 @@ const pool = mysql.createPool({
     ...config.db,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
 });
 
 async function query(sql, params) {
@@ -18,7 +18,7 @@ async function closePool() {
     await pool.end();
 }
 
-export default { 
-    query, 
-    closePool
+export default {
+    query,
+    closePool,
 };

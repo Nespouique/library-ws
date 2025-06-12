@@ -5,7 +5,7 @@ import config from '../config/config.js';
 async function getMultiple(page = 1) {
     const offset = getOffset(page, config.listPerPage);
     const rows = await db.query(
-        `SELECT id, firstName, lastName FROM Authors LIMIT ?, ?`,
+        'SELECT id, firstName, lastName FROM Authors LIMIT ?, ?',
         [offset, config.listPerPage]
     );
     const data = emptyOrRows(rows);
@@ -15,7 +15,8 @@ async function getMultiple(page = 1) {
 
 async function getById(id) {
     const rows = await db.query(
-        `SELECT id, firstName, lastName FROM Authors WHERE id = ?`, [id]
+        'SELECT id, firstName, lastName FROM Authors WHERE id = ?',
+        [id]
     );
     return rows[0] || null;
 }
@@ -23,7 +24,7 @@ async function getById(id) {
 async function create(author) {
     // Vérifie qu'un auteur avec le même prénom et nom n'existe pas déjà
     const existing = await db.query(
-        `SELECT id FROM Authors WHERE firstName = ? AND lastName = ?`,
+        'SELECT id FROM Authors WHERE firstName = ? AND lastName = ?',
         [author.firstName, author.lastName]
     );
     if (existing.length) {
@@ -32,7 +33,7 @@ async function create(author) {
         throw error;
     }
     const result = await db.query(
-        `INSERT INTO Authors (firstName, lastName) VALUES (?, ?)`,
+        'INSERT INTO Authors (firstName, lastName) VALUES (?, ?)',
         [author.firstName, author.lastName]
     );
     return { id: result.insertId, ...author };
@@ -41,7 +42,7 @@ async function create(author) {
 async function update(id, author) {
     // Vérifie qu'aucun autre auteur n'a déjà ce prénom et nom
     const existing = await db.query(
-        `SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?`,
+        'SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?',
         [author.firstName, author.lastName, id]
     );
     if (existing.length) {
@@ -50,16 +51,14 @@ async function update(id, author) {
         throw error;
     }
     const result = await db.query(
-        `UPDATE Authors SET firstName=?, lastName=? WHERE id=?`,
+        'UPDATE Authors SET firstName=?, lastName=? WHERE id=?',
         [author.firstName, author.lastName, id]
     );
     return result.affectedRows > 0;
 }
 
 async function remove(id) {
-    const result = await db.query(
-        `DELETE FROM Authors WHERE id=?`, [id]
-    );
+    const result = await db.query('DELETE FROM Authors WHERE id=?', [id]);
     return result.affectedRows > 0;
 }
 

@@ -5,12 +5,14 @@ Node.js/Express REST API for library management with complete CRUD operations fo
 ## 🚀 Features
 
 ### Authors
+
 - ✅ **Complete CRUD** : Create, Read, Update, Delete
 - ✅ **Validation** : No duplicates (unique first name + last name)
 - ✅ **Pagination** : Pagination support for lists
 - ✅ **Error handling** : Proper HTTP status codes
 
-### Books  
+### Books
+
 - ✅ **Complete CRUD** : Create, Read, Update, Delete
 - ✅ **Validation** : Unique ISBN, author must exist
 - ✅ **Pagination** : Pagination support for lists
@@ -67,6 +69,7 @@ npm run validate
 ```
 
 ### Test Coverage
+
 - **27 unit tests** with mocked data
 - **Execution time** : ~1.2 seconds
 - **Complete coverage** : CRUD for Authors and Books + utilities

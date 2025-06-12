@@ -23,6 +23,24 @@ async function getById(id) {
 }
 
 async function create(book) {
+    // Vérifie que l'auteur existe
+    const authorRows = await db.query(
+        `SELECT id FROM Authors WHERE id = ?`, [book.author]
+    );
+    if (!authorRows.length) {
+        const error = new Error('Author does not exist');
+        error.statusCode = 400;
+        throw error;
+    }
+    // Vérifie qu'un livre avec le même ISBN n'existe pas déjà
+    const existingBook = await db.query(
+        `SELECT id FROM Books WHERE isbn = ?`, [book.isbn]
+    );
+    if (existingBook.length) {
+        const error = new Error('Book with this ISBN already exists');
+        error.statusCode = 409;
+        throw error;
+    }
     const result = await db.query(
         `INSERT INTO Books (title, date, author, description, isbn, jacket) VALUES (?, ?, ?, ?, ?, ?)` ,
         [book.title, book.date, book.author, book.description, book.isbn, book.jacket]
@@ -31,6 +49,15 @@ async function create(book) {
 }
 
 async function update(id, book) {
+    // Vérifie que l'auteur existe
+    const authorRows = await db.query(
+        `SELECT id FROM Authors WHERE id = ?`, [book.author]
+    );
+    if (!authorRows.length) {
+        const error = new Error('Author does not exist');
+        error.statusCode = 400;
+        throw error;
+    }
     const result = await db.query(
         `UPDATE Books SET title=?, date=?, author=?, description=?, isbn=?, jacket=? WHERE id=?`,
         [book.title, book.date, book.author, book.description, book.isbn, book.jacket, id]

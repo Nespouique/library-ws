@@ -2,6 +2,7 @@ import express from 'express';
 import books from './routes/books.js';
 import authors from './routes/authors.js';
 import shelves from './routes/shelves.js';
+import jackets from './routes/jackets.js';
 import dotenv from 'dotenv';
 import { specs, swaggerUi } from './config/swagger.js';
 
@@ -57,6 +58,7 @@ app.use(
 );
 
 app.use('/books', books);
+app.use('/books', jackets);
 app.use('/authors', authors);
 app.use('/shelves', shelves);
 

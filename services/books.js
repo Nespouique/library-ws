@@ -91,15 +91,20 @@ async function update(id, book) {
         throw error;
     }
 
+    // Le champ jacket n'est plus modifiable via cette route
+    if (book.jacket !== undefined) {
+        const error = new Error('Jacket field is read-only. Use /books/{id}/jacket endpoint to manage jacket images');
+        error.statusCode = 400;
+        throw error;
+    }
+
     // Vérifie que l'auteur existe
     const authorRows = await db.query('SELECT id FROM Authors WHERE id = ?', [authorId]);
     if (!authorRows.length) {
         const error = new Error('Author does not exist');
         error.statusCode = 400;
         throw error;
-    }
-
-    // Vérifie qu'aucun autre livre n'a le même ISBN
+    } // Vérifie qu'aucun autre livre n'a le même ISBN
     const existing = await db.query('SELECT id FROM Books WHERE isbn = ? AND id != ?', [book.isbn, id]);
     if (existing.length) {
         const error = new Error('Book with this ISBN already exists');
@@ -107,7 +112,15 @@ async function update(id, book) {
         throw error;
     }
 
-    const result = await db.query('UPDATE Books SET title=?, date=?, author=?, description=?, isbn=?, jacket=?, shelf=? WHERE id=?', [book.title, book.date, authorId, book.description, book.isbn, book.jacket || null, book.shelf || null, id]);
+    // Le champ jacket n'est pas modifiable via cette route
+    if (book.jacket !== undefined) {
+        const error = new Error('Jacket field is read-only. Use /books/{id}/jacket endpoint to manage jacket images');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Ne met à jour que les champs autorisés (sans jacket)
+    const result = await db.query('UPDATE Books SET title=?, date=?, author=?, description=?, isbn=?, shelf=? WHERE id=?', [book.title, book.date, authorId, book.description, book.isbn, book.shelf || null, id]);
 
     return result.affectedRows > 0;
 }
@@ -158,7 +171,6 @@ async function updatePartial(id, updates) {
         fields.push('description = ?');
         values.push(updates.description);
     }
-
     if (updates.isbn !== undefined) {
         // Vérifie qu'aucun autre livre n'a le même ISBN
         const existing = await db.query('SELECT id FROM Books WHERE isbn = ? AND id != ?', [updates.isbn, id]);
@@ -171,9 +183,11 @@ async function updatePartial(id, updates) {
         values.push(updates.isbn);
     }
 
+    // Le champ jacket n'est plus modifiable via cette route
     if (updates.jacket !== undefined) {
-        fields.push('jacket = ?');
-        values.push(updates.jacket);
+        const error = new Error('Jacket field is read-only. Use /books/{id}/jacket endpoint to manage jacket images');
+        error.statusCode = 400;
+        throw error;
     }
 
     if (updates.shelf !== undefined) {
@@ -200,6 +214,11 @@ async function remove(id) {
     return result.affectedRows > 0;
 }
 
+async function updateJacket(id, jacketFilename) {
+    const result = await db.query('UPDATE Books SET jacket = ? WHERE id = ?', [jacketFilename, id]);
+    return result.affectedRows > 0;
+}
+
 export default {
     getMultiple,
     getById,
@@ -207,4 +226,5 @@ export default {
     update,
     updatePartial,
     remove,
+    updateJacket,
 };

@@ -1,6 +1,6 @@
 # Library Web Service API
 
-Node.js/Express REST API for library management with complete CRUD operations for books and authors. Designed for a future Android barcode scanning application.
+Node.js/Express REST API for library management with complete CRUD operations for books, authors, and book jacket image management. Designed for a future Android barcode scanning application.
 
 ## 🚀 Features
 
@@ -18,10 +18,53 @@ Node.js/Express REST API for library management with complete CRUD operations fo
 - ✅ **Pagination** : Pagination support for lists
 - ✅ **Relationships** : Foreign key link to Authors table
 
+### 📸 Book Jacket Images (NEW)
+
+- ✅ **Image Upload** : POST `/books/{id}/jacket` with automatic processing
+- ✅ **Multi-size Support** : 4 optimized sizes (small, medium, large, original)
+- ✅ **Format Optimization** : WebP conversion with fallback JPEG
+- ✅ **Image Retrieval** : GET `/books/{id}/jacket/{size?}`
+- ✅ **Image Deletion** : DELETE `/books/{id}/jacket`
+- ✅ **Field Protection** : `jacket` field is read-only in standard book endpoints
+
+#### Image Sizes
+
+```javascript
+{
+  small: { width: 200, height: 300, quality: 85, format: 'webp' },
+  medium: { width: 300, height: 450, quality: 90, format: 'webp' },  // default
+  large: { width: 500, height: 750, quality: 95, format: 'webp' },
+  original: { format: 'jpeg', quality: 100 }
+}
+```
+
+#### Image API Usage
+
+```bash
+# Upload jacket image
+curl -X POST http://localhost:3000/books/{uuid}/jacket -F "jacket=@image.jpg"
+
+# Get jacket image (medium size by default)
+GET /books/{uuid}/jacket
+GET /books/{uuid}/jacket/large
+
+# Delete jacket image
+DELETE /books/{uuid}/jacket
+```
+
+#### Security & Validation
+
+- **Supported formats**: JPG, PNG, WebP
+- **Max file size**: 10MB
+- **Protection**: `jacket` field cannot be modified via standard book PUT/PATCH endpoints
+- **Error handling**: Clear error messages for validation failures
+
 ## 🛠 Technologies
 
 - **Node.js** + **Express.js** (ES Modules)
 - **MySQL** with connection pooling
+- **Sharp** for image processing and optimization
+- **Multer** for file upload handling
 - **Jest** for unit testing
 - **dotenv** for environment configuration
 
@@ -64,19 +107,30 @@ npm test
 # Tests in watch mode
 npm run test:watch
 
-# Complete validation
+# Complete validation (lint + format + tests)
 npm run validate
 ```
 
 ### Test Coverage
 
-- **27 unit tests** with mocked data
-- **Execution time** : ~1.2 seconds
-- **Complete coverage** : CRUD for Authors and Books + utilities
+- **94 unit tests** with mocked data including image service tests
+- **Execution time** : ~1.3 seconds
+- **Complete coverage** : CRUD for Authors, Books, Image management + utilities
+- **Services tested** : Books, Authors, Images (validation, filename generation)
 
 ## 🚀 Production Ready
 
-This API is designed to be the backend for an Android book barcode scanning application. It can be easily deployed and integrated with any frontend.
+This API is designed to be the backend for an Android book barcode scanning application with complete image management capabilities. It can be easily deployed and integrated with any frontend.
+
+### File Structure
+
+```
+uploads/jackets/
+├── original/        # Original images in JPEG
+├── small/          # 200x300 WebP
+├── medium/         # 300x450 WebP
+└── large/          # 500x750 WebP
+```
 
 ---
 

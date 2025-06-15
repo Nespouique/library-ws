@@ -145,9 +145,8 @@ router.post('/', async function (req, res, next) {
 /**
  * @swagger
  * /books/{id}:
- *   put:
- *     summary: Update a book
- *     description: Update an existing book's information
+ *   put: *     summary: Update a book
+ *     description: Update an existing book's information. Note that the jacket field is read-only and must be managed via the dedicated /books/{id}/jacket endpoints.
  *     tags: [Books]
  *     parameters:
  *       - in: path
@@ -222,9 +221,8 @@ router.put('/:id', async function (req, res, next) {
 /**
  * @swagger
  * /books/{id}:
- *   patch:
- *     summary: Partially update a book
- *     description: Update specific fields of an existing book
+ *   patch: *     summary: Partially update a book
+ *     description: Update specific fields of an existing book. Note that the jacket field is read-only and must be managed via the dedicated /books/{id}/jacket endpoints.
  *     tags: [Books]
  *     parameters:
  *       - in: path

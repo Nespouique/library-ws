@@ -268,7 +268,16 @@ const booksService = {
         const index = mockBooks.findIndex(b => b.id === id);
         if (index === -1) return false;
 
-        mockBooks[index] = { ...mockBooks[index], ...book, author: authorId };
+        // Le champ jacket n'est pas modifiable via cette route
+        if (book.jacket !== undefined) {
+            const error = new Error('Jacket field is read-only. Use /books/{id}/jacket endpoint to manage jacket images');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        // Filter out jacket field - it should not be updated via regular update
+        const { jacket, ...updateData } = book;
+        mockBooks[index] = { ...mockBooks[index], ...updateData, author: authorId };
         return true;
     },
 
@@ -309,10 +318,14 @@ const booksService = {
             }
         }
 
-        // Apply partial updates
+        // Apply partial updates (excluding jacket field)
         Object.keys(updates).forEach(key => {
-            if (updates[key] !== undefined) {
+            if (updates[key] !== undefined && key !== 'jacket') {
                 mockBooks[index][key] = updates[key];
+            } else if (key === 'jacket') {
+                const error = new Error('Jacket field is read-only. Use /books/{id}/jacket endpoint to manage jacket images');
+                error.statusCode = 400;
+                throw error;
             }
         });
 
@@ -324,6 +337,20 @@ const booksService = {
         if (index === -1) return false;
 
         mockBooks.splice(index, 1);
+        return true;
+    },
+
+    async updateJacket(id, newFilename) {
+        const index = mockBooks.findIndex(b => b.id === id);
+        if (index === -1) return false;
+
+        // If newFilename is null, set jacket to null
+        if (newFilename === null) {
+            mockBooks[index].jacket = null;
+        } else {
+            // Otherwise, update the jacket filename
+            mockBooks[index].jacket = newFilename;
+        }
         return true;
     },
 };
@@ -819,7 +846,6 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 description: 'Updated description',
                 isbn: '9999999999999',
-                jacket: '/covers/updated.jpg',
                 shelf: 'e5f6g7h8-i9j0-1234-ef01-345678901234',
             };
 
@@ -837,7 +863,6 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                 description: 'Updated description',
                 isbn: '8888888888888',
-                jacket: '/covers/updated.jpg',
                 shelf: null,
             };
 
@@ -854,7 +879,6 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 author: { id: 'b2c3d4e5-f6g7-8901-bcde-f12345678901' },
                 description: 'Updated description 2',
                 isbn: '8888888888888',
-                jacket: '/covers/updated2.jpg',
             };
 
             const result = await booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData);
@@ -1046,6 +1070,79 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result).toBe(false);
             expect(mockBooks).toHaveLength(2);
+        });
+    });
+
+    describe('updateJacket', () => {
+        test('should update jacket filename successfully', async () => {
+            const newJacketFilename = 'jacket_test_123456789';
+            const result = await booksService.updateJacket('e5f6g7h8-i9j0-1234-ef01-345678901234', newJacketFilename);
+
+            expect(result).toBe(true);
+            const updatedBook = mockBooks.find(b => b.id === 'e5f6g7h8-i9j0-1234-ef01-345678901234');
+            expect(updatedBook.jacket).toBe(newJacketFilename);
+        });
+
+        test('should set jacket to null', async () => {
+            const result = await booksService.updateJacket('e5f6g7h8-i9j0-1234-ef01-345678901234', null);
+
+            expect(result).toBe(true);
+            const updatedBook = mockBooks.find(b => b.id === 'e5f6g7h8-i9j0-1234-ef01-345678901234');
+            expect(updatedBook.jacket).toBeNull();
+        });
+
+        test('should return false when book not found', async () => {
+            const result = await booksService.updateJacket('00000000-0000-0000-0000-000000000000', 'test_jacket');
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('updateJacket', () => {
+        test('should update jacket filename successfully', async () => {
+            const newJacketFilename = 'jacket_test_123456789';
+            const result = await booksService.updateJacket('e5f6g7h8-i9j0-1234-ef01-345678901234', newJacketFilename);
+
+            expect(result).toBe(true);
+            const updatedBook = mockBooks.find(b => b.id === 'e5f6g7h8-i9j0-1234-ef01-345678901234');
+            expect(updatedBook.jacket).toBe(newJacketFilename);
+        });
+
+        test('should set jacket to null', async () => {
+            const result = await booksService.updateJacket('e5f6g7h8-i9j0-1234-ef01-345678901234', null);
+
+            expect(result).toBe(true);
+            const updatedBook = mockBooks.find(b => b.id === 'e5f6g7h8-i9j0-1234-ef01-345678901234');
+            expect(updatedBook.jacket).toBeNull();
+        });
+
+        test('should return false when book not found', async () => {
+            const result = await booksService.updateJacket('00000000-0000-0000-0000-000000000000', 'test_jacket');
+
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('jacket field protection in updates', () => {
+        test('should throw error when trying to update jacket via regular update', async () => {
+            const updates = {
+                title: 'Updated Title',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                isbn: '1111111111111',
+                date: '2024-03-01',
+                description: 'Updated description',
+                jacket: 'should_cause_error',
+            };
+
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Jacket field is read-only');
+        });
+
+        test('should throw error when trying to update jacket via partial update', async () => {
+            const updates = {
+                jacket: 'should_cause_error',
+            };
+
+            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Jacket field is read-only');
         });
     });
 });

@@ -98,13 +98,18 @@ router.get('/:id', async function (req, res, next) {
  *     description: Create a new shelf in the library system
  *     tags: [Shelves]
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             description: Empty object (shelf is created with auto-generated UUID only)
- *             example: {}
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the shelf
+ *                 example: "Étagère Littérature Française"
  *     responses:
  *       201:
  *         description: Shelf created successfully
@@ -113,13 +118,8 @@ router.get('/:id', async function (req, res, next) {
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
- *                   example: Shelf created successfully
- *                 id:
- *                   type: string
- *                   format: uuid
- *                   example: c3d4e5f6-g7h8-9012-cdef-123456789012
+ *                 data:
+ *                   $ref: '#/components/schemas/Shelf'
  *       400:
  *         description: Bad request
  *         content:
@@ -148,7 +148,7 @@ router.post('/', async function (req, res, next) {
  * /shelves/{id}:
  *   put:
  *     summary: Update a shelf
- *     description: Update a shelf by UUID (currently no updatable fields, used for validation)
+ *     description: Update a shelf's name by UUID
  *     tags: [Shelves]
  *     parameters:
  *       - in: path
@@ -159,13 +159,18 @@ router.post('/', async function (req, res, next) {
  *           format: uuid
  *         description: Shelf UUID
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             description: Empty object (no updatable fields currently)
- *             example: {}
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: New name for the shelf
+ *                 example: "Étagère Science-Fiction"
  *     responses:
  *       200:
  *         description: Shelf updated successfully
@@ -206,7 +211,7 @@ router.put('/:id', async function (req, res, next) {
  * /shelves/{id}:
  *   patch:
  *     summary: Partially update a shelf
- *     description: Update specific fields of a shelf (currently no updatable fields)
+ *     description: Update specific fields of a shelf (name is optional for PATCH)
  *     tags: [Shelves]
  *     parameters:
  *       - in: path
@@ -217,13 +222,16 @@ router.put('/:id', async function (req, res, next) {
  *           format: uuid
  *         description: Shelf UUID
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             description: Empty object (no updatable fields currently)
- *             example: {}
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: New name for the shelf (optional)
+ *                 example: "Étagère Mystère"
  *     responses:
  *       200:
  *         description: Shelf updated successfully

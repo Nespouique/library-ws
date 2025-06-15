@@ -44,7 +44,11 @@ const mockBooks = [
     },
 ];
 
-const mockShelves = [{ id: 'd4e5f6g7-h8i9-0123-def0-234567890123' }, { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234' }, { id: 'f6g7h8i9-j0k1-2345-f012-456789012345' }];
+const mockShelves = [
+    { id: 'd4e5f6g7-h8i9-0123-def0-234567890123', name: 'Étagère 1' },
+    { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234', name: 'Étagère 2' },
+    { id: 'f6g7h8i9-j0k1-2345-f012-456789012345', name: 'Étagère 3' },
+];
 
 // Generate UUID-like string for testing
 function generateTestUuid() {
@@ -336,26 +340,44 @@ const shelvesService = {
         const shelf = mockShelves.find(s => s.id === id);
         return shelf || null;
     },
-    async create() {
+
+    async create(shelf) {
+        if (!shelf || !shelf.name || shelf.name.trim() === '') {
+            const error = new Error('Shelf name is required');
+            error.statusCode = 400;
+            throw error;
+        }
         const newId = generateTestUuid();
-        const newShelf = { id: newId };
+        const newShelf = { id: newId, name: shelf.name.trim() };
         mockShelves.push(newShelf);
-        return { message: 'Shelf created successfully', id: newId };
+        return newShelf;
     },
 
-    async update(id) {
+    async update(id, shelf) {
+        if (!shelf || !shelf.name || shelf.name.trim() === '') {
+            const error = new Error('Shelf name is required');
+            error.statusCode = 400;
+            throw error;
+        }
         const index = mockShelves.findIndex(s => s.id === id);
         if (index === -1) return false;
 
+        mockShelves[index].name = shelf.name.trim();
         return true;
     },
 
-    async updatePartial(id, _updates) {
+    async updatePartial(id, updates) {
         const index = mockShelves.findIndex(s => s.id === id);
         if (index === -1) return false;
 
-        // Since we only have ID and no other updatable fields,
-        // any partial update is essentially a no-op but successful
+        if (updates.name !== undefined) {
+            if (!updates.name || updates.name.trim() === '') {
+                const error = new Error('Shelf name cannot be empty');
+                error.statusCode = 400;
+                throw error;
+            }
+            mockShelves[index].name = updates.name.trim();
+        }
         return true;
     },
 
@@ -1060,7 +1082,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
     beforeEach(() => {
         // Reset mock data before each test
         mockShelves.length = 0;
-        mockShelves.push({ id: 'd4e5f6g7-h8i9-0123-def0-234567890123' }, { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234' }, { id: 'f6g7h8i9-j0k1-2345-f012-456789012345' });
+        mockShelves.push({ id: 'd4e5f6g7-h8i9-0123-def0-234567890123', name: 'Étagère 1' }, { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234', name: 'Étagère 2' }, { id: 'f6g7h8i9-j0k1-2345-f012-456789012345', name: 'Étagère 3' });
 
         // Also reset books data to ensure clean state for shelf tests
         mockBooks.length = 0;
@@ -1116,6 +1138,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result).toEqual({
                 id: 'd4e5f6g7-h8i9-0123-def0-234567890123',
+                name: 'Étagère 1',
             });
         });
 
@@ -1127,42 +1150,99 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('create', () => {
-        test('should create new shelf successfully', async () => {
-            const result = await shelvesService.create();
-            expect(result.message).toBe('Shelf created successfully');
+        test('should create new shelf successfully with name', async () => {
+            const newShelf = { name: 'Nouvelle Étagère' };
+            const result = await shelvesService.create(newShelf);
+
+            expect(result.name).toBe('Nouvelle Étagère');
             expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockShelves).toHaveLength(4);
         });
+
+        test('should throw error when name is missing', async () => {
+            await expect(shelvesService.create({})).rejects.toThrow('Shelf name is required');
+        });
+
+        test('should throw error when name is empty string', async () => {
+            await expect(shelvesService.create({ name: '' })).rejects.toThrow('Shelf name is required');
+        });
+
+        test('should trim whitespace from name', async () => {
+            const newShelf = { name: '  Étagère avec espaces  ' };
+            const result = await shelvesService.create(newShelf);
+
+            expect(result.name).toBe('Étagère avec espaces');
+        });
     });
     describe('update', () => {
-        test('should update shelf successfully', async () => {
-            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123');
+        test('should update shelf name successfully', async () => {
+            const updateData = { name: 'Étagère Mise à Jour' };
+            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData);
 
             expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère Mise à Jour');
         });
 
         test('should return false when shelf not found', async () => {
-            const result = await shelvesService.update('00000000-0000-0000-0000-000000000000');
+            const updateData = { name: 'Étagère Test' };
+            const result = await shelvesService.update('00000000-0000-0000-0000-000000000000', updateData);
 
             expect(result).toBe(false);
+        });
+
+        test('should throw error when name is missing', async () => {
+            await expect(shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', {})).rejects.toThrow('Shelf name is required');
+        });
+
+        test('should trim whitespace from name', async () => {
+            const updateData = { name: '  Étagère Trimée  ' };
+            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère Trimée');
         });
     });
 
     describe('updatePartial', () => {
-        test('should update shelf successfully (no-op for now)', async () => {
+        test('should update shelf name when provided', async () => {
+            const updates = { name: 'Étagère Partiellement Mise à Jour' };
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère Partiellement Mise à Jour');
+        });
+
+        test('should be successful with no updates (no-op)', async () => {
             const updates = {};
 
             const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
 
             expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
         });
 
         test('should return false when shelf not found', async () => {
-            const updates = {};
+            const updates = { name: 'Test' };
 
             const result = await shelvesService.updatePartial('00000000-0000-0000-0000-000000000000', updates);
 
             expect(result).toBe(false);
+        });
+
+        test('should throw error when name is empty in partial update', async () => {
+            const updates = { name: '' };
+
+            await expect(shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates)).rejects.toThrow('Shelf name cannot be empty');
+        });
+
+        test('should trim whitespace in partial update', async () => {
+            const updates = { name: '  Étagère Partiellement Trimée  ' };
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère Partiellement Trimée');
         });
     });
 

@@ -262,12 +262,18 @@ const options = {
                 },
                 Shelf: {
                     type: 'object',
+                    required: ['id', 'name'],
                     properties: {
                         id: {
                             type: 'string',
                             format: 'uuid',
                             description: 'The UUID of the shelf',
                             example: 'c3d4e5f6-g7h8-9012-cdef-123456789012',
+                        },
+                        name: {
+                            type: 'string',
+                            description: 'The name of the shelf',
+                            example: 'Étagère Littérature Française',
                         },
                     },
                 },

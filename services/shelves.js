@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple(page = 1) {
     const offset = getOffset(page, config.listPerPage);
-    const rows = await db.query('SELECT id FROM Shelves LIMIT ?,?', [offset, config.listPerPage]);
+    const rows = await db.query('SELECT id, name FROM Shelves LIMIT ?,?', [offset, config.listPerPage]);
     const data = emptyOrRows(rows);
     const meta = { page };
 
@@ -13,38 +13,56 @@ async function getMultiple(page = 1) {
 }
 
 async function getById(id) {
-    const rows = await db.query('SELECT id FROM Shelves WHERE id = ?', [id]);
+    const rows = await db.query('SELECT id, name FROM Shelves WHERE id = ?', [id]);
 
     return rows[0] || null;
 }
 
 async function create(shelf) {
-    // For now, we only insert with auto-generated ID
-    // Future: could add properties like name, location, wled_segment, etc.
-    const shelfId = uuidv4();
-    await db.query('INSERT INTO Shelves (id) VALUES (?)', [shelfId]);
+    // Validate required field
+    if (!shelf.name || shelf.name.trim() === '') {
+        const error = new Error('Shelf name is required');
+        error.statusCode = 400;
+        throw error;
+    }
 
-    return { id: shelfId, ...shelf };
+    const shelfId = uuidv4();
+    await db.query('INSERT INTO Shelves (id, name) VALUES (?, ?)', [shelfId, shelf.name.trim()]);
+
+    return { id: shelfId, name: shelf.name.trim() };
 }
 
-async function update(id, _shelf) {
-    // For now, there's nothing to update since we only have ID
-    // Future: could update properties like name, location, wled_segment, etc.
-    const result = await db.query('UPDATE Shelves SET id = ? WHERE id = ?', [id, id]);
+async function update(id, shelf) {
+    // Validate required field
+    if (!shelf.name || shelf.name.trim() === '') {
+        const error = new Error('Shelf name is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const result = await db.query('UPDATE Shelves SET name = ? WHERE id = ?', [shelf.name.trim(), id]);
 
     return result.affectedRows > 0;
 }
 
-async function updatePartial(id, _updates) {
-    // For now, there's nothing to update since we only have ID
-    // Future: could update properties like name, location, wled_segment, etc.
+async function updatePartial(id, updates) {
     const current = await getById(id);
     if (!current) {
         return false;
     }
 
-    // Since we only have ID and no other updatable fields,
-    // any partial update is essentially a no-op but successful
+    // Only update if name is provided
+    if (updates.name !== undefined) {
+        if (!updates.name || updates.name.trim() === '') {
+            const error = new Error('Shelf name cannot be empty');
+            error.statusCode = 400;
+            throw error;
+        }
+        const result = await db.query('UPDATE Shelves SET name = ? WHERE id = ?', [updates.name.trim(), id]);
+        return result.affectedRows > 0;
+    }
+
+    // If no valid updates, return true (no-op)
     return true;
 }
 

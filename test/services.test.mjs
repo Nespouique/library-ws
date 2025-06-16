@@ -99,7 +99,7 @@ const authorsService = {
         // Check for duplicate name
         const duplicate = mockAuthors.find(a => a.id !== id && a.firstName === author.firstName && a.lastName === author.lastName);
         if (duplicate) {
-            const error = new Error('Another author with this name already exists');
+            const error = new Error('Author already exists');
             error.statusCode = 409;
             throw error;
         }
@@ -125,7 +125,7 @@ const authorsService = {
         // Check for duplicate name
         const duplicate = mockAuthors.find(a => a.id !== id && a.firstName === finalFirstName && a.lastName === finalLastName);
         if (duplicate) {
-            const error = new Error('Another author with this name already exists');
+            const error = new Error('Author already exists');
             error.statusCode = 409;
             throw error;
         }
@@ -209,7 +209,7 @@ const booksService = {
         // Check for duplicate ISBN
         const existing = mockBooks.find(b => b.isbn === book.isbn);
         if (existing) {
-            const error = new Error('Book with this ISBN already exists');
+            const error = new Error('Book/ISBN already exists');
             error.statusCode = 409;
             throw error;
         }
@@ -260,7 +260,7 @@ const booksService = {
         // Check for duplicate ISBN
         const duplicate = mockBooks.find(b => b.id !== id && b.isbn === book.isbn);
         if (duplicate) {
-            const error = new Error('Book with this ISBN already exists');
+            const error = new Error('Book/ISBN already exists');
             error.statusCode = 409;
             throw error;
         }
@@ -312,7 +312,7 @@ const booksService = {
         if (updates.isbn !== undefined) {
             const duplicate = mockBooks.find(b => b.id !== id && b.isbn === updates.isbn);
             if (duplicate) {
-                const error = new Error('Book with this ISBN already exists');
+                const error = new Error('Book/ISBN already exists');
                 error.statusCode = 409;
                 throw error;
             }
@@ -383,7 +383,7 @@ const shelvesService = {
         // Check if a shelf with the same name already exists
         const existingShelf = await this.getByName(shelf.name);
         if (existingShelf) {
-            const error = new Error('A shelf with this name already exists');
+            const error = new Error('Shelf already exists');
             error.statusCode = 409;
             throw error;
         }
@@ -404,7 +404,7 @@ const shelvesService = {
         // Check if a shelf with the same name already exists (excluding current shelf)
         const existingShelf = await this.getByName(shelf.name);
         if (existingShelf && existingShelf.id !== id) {
-            const error = new Error('A shelf with this name already exists');
+            const error = new Error('Shelf already exists');
             error.statusCode = 409;
             throw error;
         }
@@ -430,7 +430,7 @@ const shelvesService = {
             // Check if a shelf with the same name already exists (excluding current shelf)
             const existingShelf = await this.getByName(updates.name);
             if (existingShelf && existingShelf.id !== id) {
-                const error = new Error('A shelf with this name already exists');
+                const error = new Error('Shelf already exists');
                 error.statusCode = 409;
                 throw error;
             }
@@ -579,7 +579,7 @@ describe('Authors Service - Unit Tests with Mock Data (UUID)', () => {
         test('should throw error when duplicate name exists', async () => {
             const updateData = { firstName: 'Jane', lastName: 'Smith' }; // Existing name
 
-            await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow('Another author with this name already exists');
+            await expect(authorsService.update('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updateData)).rejects.toThrow('Author already exists');
         });
 
         test('should throw error when firstName is missing (PUT validation)', async () => {
@@ -663,7 +663,7 @@ describe('Authors Service - Unit Tests with Mock Data (UUID)', () => {
             // Try to change John Doe to Jane Smith (which already exists)
             const updates = { firstName: 'Jane', lastName: 'Smith' };
 
-            await expect(authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates)).rejects.toThrow('Another author with this name already exists');
+            await expect(authorsService.updatePartial('a1b2c3d4-e5f6-7890-abcd-ef1234567890', updates)).rejects.toThrow('Author already exists');
         });
 
         test('should allow updating firstName when result is not duplicate', async () => {
@@ -866,7 +866,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 isbn: '1234567890123', // Existing ISBN
             };
 
-            await expect(booksService.create(newBook)).rejects.toThrow('Book with this ISBN already exists');
+            await expect(booksService.create(newBook)).rejects.toThrow('Book/ISBN already exists');
         });
     });
 
@@ -978,7 +978,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 isbn: '9876543210987', // Existing ISBN from book 2
             };
 
-            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('Book with this ISBN already exists');
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('Book/ISBN already exists');
         });
     });
 
@@ -1034,7 +1034,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
         test('should throw error when partial ISBN update creates duplicate', async () => {
             const updates = { isbn: '9876543210987' }; // Existing ISBN from book 2
 
-            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Book with this ISBN already exists');
+            await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Book/ISBN already exists');
         });
 
         test('should update author with ID string', async () => {
@@ -1308,7 +1308,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             const error = await shelvesService.create(newShelf).catch(e => e);
 
-            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.message).toBe('Shelf already exists');
             expect(error.statusCode).toBe(409);
             expect(mockShelves).toHaveLength(3); // Should not add duplicate
         });
@@ -1318,7 +1318,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             const error = await shelvesService.create(newShelf).catch(e => e);
 
-            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.message).toBe('Shelf already exists');
             expect(error.statusCode).toBe(409);
         });
     });
@@ -1355,7 +1355,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             const error = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData).catch(e => e);
 
-            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.message).toBe('Shelf already exists');
             expect(error.statusCode).toBe(409);
             expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
         });
@@ -1417,7 +1417,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             const error = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates).catch(e => e);
 
-            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.message).toBe('Shelf already exists');
             expect(error.statusCode).toBe(409);
             expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
         });

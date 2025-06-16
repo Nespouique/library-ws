@@ -43,7 +43,7 @@ async function update(id, author) {
     // Vérifie qu'aucun autre auteur n'a déjà ce prénom et nom
     const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [author.firstName, author.lastName, id]);
     if (existing.length) {
-        const error = new Error('Another author with this name already exists');
+        const error = new Error('Author already exists');
         error.statusCode = 409;
         throw error;
     }
@@ -84,7 +84,7 @@ async function updatePartial(id, updates) {
 
     const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [finalFirstName, finalLastName, id]);
     if (existing.length) {
-        const error = new Error('Another author with this name already exists');
+        const error = new Error('Author already exists');
         error.statusCode = 409;
         throw error;
     }

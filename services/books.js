@@ -69,7 +69,7 @@ async function create(book) {
     // Vérifie qu'un livre avec le même ISBN n'existe pas déjà
     const existingBook = await db.query('SELECT id FROM Books WHERE isbn = ?', [book.isbn]);
     if (existingBook.length) {
-        const error = new Error('Book with this ISBN already exists');
+        const error = new Error('Book/ISBN already exists');
         error.statusCode = 409;
         throw error;
     }
@@ -107,7 +107,7 @@ async function update(id, book) {
     } // Vérifie qu'aucun autre livre n'a le même ISBN
     const existing = await db.query('SELECT id FROM Books WHERE isbn = ? AND id != ?', [book.isbn, id]);
     if (existing.length) {
-        const error = new Error('Book with this ISBN already exists');
+        const error = new Error('Book/ISBN already exists');
         error.statusCode = 409;
         throw error;
     }
@@ -175,7 +175,7 @@ async function updatePartial(id, updates) {
         // Vérifie qu'aucun autre livre n'a le même ISBN
         const existing = await db.query('SELECT id FROM Books WHERE isbn = ? AND id != ?', [updates.isbn, id]);
         if (existing.length) {
-            const error = new Error('Book with this ISBN already exists');
+            const error = new Error('Book/ISBN already exists');
             error.statusCode = 409;
             throw error;
         }

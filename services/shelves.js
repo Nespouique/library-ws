@@ -34,7 +34,7 @@ async function create(shelf) {
     // Check if a shelf with the same name already exists
     const existingShelf = await getByName(shelf.name);
     if (existingShelf) {
-        const error = new Error('A shelf with this name already exists');
+        const error = new Error('Shelf already exists');
         error.statusCode = 409;
         throw error;
     }
@@ -56,7 +56,7 @@ async function update(id, shelf) {
     // Check if a shelf with the same name already exists (excluding current shelf)
     const existingShelf = await getByName(shelf.name);
     if (existingShelf && existingShelf.id !== id) {
-        const error = new Error('A shelf with this name already exists');
+        const error = new Error('Shelf already exists');
         error.statusCode = 409;
         throw error;
     }
@@ -83,7 +83,7 @@ async function updatePartial(id, updates) {
         // Check if a shelf with the same name already exists (excluding current shelf)
         const existingShelf = await getByName(updates.name);
         if (existingShelf && existingShelf.id !== id) {
-            const error = new Error('A shelf with this name already exists');
+            const error = new Error('Shelf already exists');
             error.statusCode = 409;
             throw error;
         }

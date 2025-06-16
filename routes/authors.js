@@ -199,7 +199,7 @@ router.post('/', async function (req, res, next) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       409:
- *         description: Another author with this name already exists
+ *         description: Author already exists
  *         content:
  *           application/json:
  *             schema:
@@ -271,7 +271,7 @@ router.put('/:id', async function (req, res, next) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       409:
- *         description: Another author with this name already exists
+ *         description: Author already exists
  *         content:
  *           application/json:
  *             schema:

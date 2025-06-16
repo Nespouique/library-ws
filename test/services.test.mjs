@@ -368,12 +368,26 @@ const shelvesService = {
         return shelf || null;
     },
 
+    async getByName(name) {
+        const shelf = mockShelves.find(s => s.name === name.trim());
+        return shelf || null;
+    },
+
     async create(shelf) {
         if (!shelf || !shelf.name || shelf.name.trim() === '') {
             const error = new Error('Shelf name is required');
             error.statusCode = 400;
             throw error;
         }
+
+        // Check if a shelf with the same name already exists
+        const existingShelf = await this.getByName(shelf.name);
+        if (existingShelf) {
+            const error = new Error('A shelf with this name already exists');
+            error.statusCode = 409;
+            throw error;
+        }
+
         const newId = generateTestUuid();
         const newShelf = { id: newId, name: shelf.name.trim() };
         mockShelves.push(newShelf);
@@ -386,6 +400,15 @@ const shelvesService = {
             error.statusCode = 400;
             throw error;
         }
+
+        // Check if a shelf with the same name already exists (excluding current shelf)
+        const existingShelf = await this.getByName(shelf.name);
+        if (existingShelf && existingShelf.id !== id) {
+            const error = new Error('A shelf with this name already exists');
+            error.statusCode = 409;
+            throw error;
+        }
+
         const index = mockShelves.findIndex(s => s.id === id);
         if (index === -1) return false;
 
@@ -403,6 +426,15 @@ const shelvesService = {
                 error.statusCode = 400;
                 throw error;
             }
+
+            // Check if a shelf with the same name already exists (excluding current shelf)
+            const existingShelf = await this.getByName(updates.name);
+            if (existingShelf && existingShelf.id !== id) {
+                const error = new Error('A shelf with this name already exists');
+                error.statusCode = 409;
+                throw error;
+            }
+
             mockShelves[index].name = updates.name.trim();
         }
         return true;
@@ -1270,6 +1302,25 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result.name).toBe('Étagère avec espaces');
         });
+
+        test('should throw 409 error when shelf name already exists', async () => {
+            const newShelf = { name: 'Étagère 1' }; // Name already exists in mock data
+
+            const error = await shelvesService.create(newShelf).catch(e => e);
+
+            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.statusCode).toBe(409);
+            expect(mockShelves).toHaveLength(3); // Should not add duplicate
+        });
+
+        test('should throw 409 error for duplicate name with different case/spaces', async () => {
+            const newShelf = { name: ' Étagère 1 ' }; // Same name with spaces
+
+            const error = await shelvesService.create(newShelf).catch(e => e);
+
+            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.statusCode).toBe(409);
+        });
     });
     describe('update', () => {
         test('should update shelf name successfully', async () => {
@@ -1297,6 +1348,25 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result).toBe(true);
             expect(mockShelves[0].name).toBe('Étagère Trimée');
+        });
+
+        test('should throw 409 error when updating to existing shelf name', async () => {
+            const updateData = { name: 'Étagère 2' }; // Name already exists in mock data
+
+            const error = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData).catch(e => e);
+
+            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.statusCode).toBe(409);
+            expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
+        });
+
+        test('should allow updating shelf with its own name', async () => {
+            const updateData = { name: 'Étagère 1' }; // Same name as current shelf
+
+            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère 1');
         });
     });
 
@@ -1340,6 +1410,25 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result).toBe(true);
             expect(mockShelves[0].name).toBe('Étagère Partiellement Trimée');
+        });
+
+        test('should throw 409 error when partial updating to existing shelf name', async () => {
+            const updates = { name: 'Étagère 3' }; // Name already exists in mock data
+
+            const error = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates).catch(e => e);
+
+            expect(error.message).toBe('A shelf with this name already exists');
+            expect(error.statusCode).toBe(409);
+            expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
+        });
+
+        test('should allow partial updating shelf with its own name', async () => {
+            const updates = { name: 'Étagère 1' }; // Same name as current shelf
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère 1');
         });
     });
 

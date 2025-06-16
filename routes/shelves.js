@@ -126,6 +126,12 @@ router.get('/:id', async function (req, res, next) {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Conflict - A shelf with this name already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Internal server error
  *         content:
@@ -188,6 +194,12 @@ router.post('/', async function (req, res, next) {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Conflict - A shelf with this name already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Internal server error
  *         content:
@@ -245,6 +257,12 @@ router.put('/:id', async function (req, res, next) {
  *                   example: Shelf updated
  *       404:
  *         description: Shelf not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Conflict - A shelf with this name already exists
  *         content:
  *           application/json:
  *             schema:

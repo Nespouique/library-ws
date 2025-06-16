@@ -18,11 +18,24 @@ async function getById(id) {
     return rows[0] || null;
 }
 
+async function getByName(name) {
+    const rows = await db.query('SELECT id, name FROM Shelves WHERE name = ?', [name.trim()]);
+    return rows[0] || null;
+}
+
 async function create(shelf) {
     // Validate required field
     if (!shelf.name || shelf.name.trim() === '') {
         const error = new Error('Shelf name is required');
         error.statusCode = 400;
+        throw error;
+    }
+
+    // Check if a shelf with the same name already exists
+    const existingShelf = await getByName(shelf.name);
+    if (existingShelf) {
+        const error = new Error('A shelf with this name already exists');
+        error.statusCode = 409;
         throw error;
     }
 
@@ -37,6 +50,14 @@ async function update(id, shelf) {
     if (!shelf.name || shelf.name.trim() === '') {
         const error = new Error('Shelf name is required');
         error.statusCode = 400;
+        throw error;
+    }
+
+    // Check if a shelf with the same name already exists (excluding current shelf)
+    const existingShelf = await getByName(shelf.name);
+    if (existingShelf && existingShelf.id !== id) {
+        const error = new Error('A shelf with this name already exists');
+        error.statusCode = 409;
         throw error;
     }
 
@@ -58,6 +79,15 @@ async function updatePartial(id, updates) {
             error.statusCode = 400;
             throw error;
         }
+
+        // Check if a shelf with the same name already exists (excluding current shelf)
+        const existingShelf = await getByName(updates.name);
+        if (existingShelf && existingShelf.id !== id) {
+            const error = new Error('A shelf with this name already exists');
+            error.statusCode = 409;
+            throw error;
+        }
+
         const result = await db.query('UPDATE Shelves SET name = ? WHERE id = ?', [updates.name.trim(), id]);
         return result.affectedRows > 0;
     }
@@ -82,6 +112,7 @@ async function remove(id) {
 export default {
     getMultiple,
     getById,
+    getByName,
     create,
     update,
     updatePartial,

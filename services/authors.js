@@ -98,6 +98,13 @@ async function updatePartial(id, updates) {
 }
 
 async function remove(id) {
+    // Check if author is referenced by any books
+    const books = await db.query('SELECT COUNT(*) as count FROM Books WHERE author = ?', [id]);
+
+    if (books[0].count > 0) {
+        throw new Error('Cannot delete author: it has books');
+    }
+
     const result = await db.query('DELETE FROM Authors WHERE id=?', [id]);
 
     return result.affectedRows > 0;

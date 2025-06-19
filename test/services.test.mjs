@@ -154,20 +154,7 @@ const booksService = {
     async getMultiple(page = 1) {
         const listPerPage = 10;
         const offset = getOffset(page, listPerPage);
-        const booksWithAuthors = mockBooks.slice(offset, offset + listPerPage).map(book => {
-            const author = mockAuthors.find(a => a.id === book.author);
-            return {
-                ...book,
-                author: author
-                    ? {
-                          id: author.id,
-                          firstName: author.firstName,
-                          lastName: author.lastName,
-                      }
-                    : null,
-            };
-        });
-        const data = emptyOrRows(booksWithAuthors);
+        const data = emptyOrRows(mockBooks.slice(offset, offset + listPerPage));
         return { data, meta: { page } };
     },
 
@@ -175,17 +162,7 @@ const booksService = {
         const book = mockBooks.find(b => b.id === id);
         if (!book) return null;
 
-        const author = mockAuthors.find(a => a.id === book.author);
-        return {
-            ...book,
-            author: author
-                ? {
-                      id: author.id,
-                      firstName: author.firstName,
-                      lastName: author.lastName,
-                  }
-                : null,
-        };
+        return book;
     },
 
     async create(book) {
@@ -214,28 +191,10 @@ const booksService = {
             throw error;
         }
         const newId = generateTestUuid();
-        const newBook = { id: newId, ...book, author: authorId };
-        mockBooks.push(newBook);
+        const createdBook = { id: newId, ...book, author: authorId };
+        mockBooks.push(createdBook);
 
-        // Return the book in the same format as getById (with author as object)
-        // but keep the stored version with author as ID
-        const author = mockAuthors.find(a => a.id === authorId);
-        return {
-            id: newId,
-            title: book.title,
-            date: book.date,
-            description: book.description,
-            isbn: book.isbn,
-            jacket: book.jacket,
-            shelf: book.shelf || null,
-            author: author
-                ? {
-                      id: author.id,
-                      firstName: author.firstName,
-                      lastName: author.lastName,
-                  }
-                : null,
-        };
+        return createdBook;
     },
 
     async update(id, book) {
@@ -742,29 +701,21 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('getMultiple', () => {
-        test('should return paginated books with author objects', async () => {
+        test('should return paginated books with author IDs', async () => {
             const result = await booksService.getMultiple(1);
 
             expect(result.data).toHaveLength(2);
-            expect(result.data[0].author).toEqual({
-                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                firstName: 'John',
-                lastName: 'Doe',
-            });
+            expect(result.data[0].author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
             expect(result.meta).toEqual({ page: 1 });
         });
     });
 
     describe('getById', () => {
-        test('should return book with author object when found', async () => {
+        test('should return book with author ID when found', async () => {
             const result = await booksService.getById('e5f6g7h8-i9j0-1234-ef01-345678901234');
 
             expect(result.title).toBe('Book 1');
-            expect(result.author).toEqual({
-                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                firstName: 'John',
-                lastName: 'Doe',
-            });
+            expect(result.author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
             expect(result.shelf).toBe('d4e5f6g7-h8i9-0123-def0-234567890123');
         });
 
@@ -796,12 +747,8 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
             const result = await booksService.create(newBook);
 
             expect(result.title).toBe('New Book');
-            expect(result.author).toEqual({
-                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                firstName: 'John',
-                lastName: 'Doe',
-            });
-            expect(result.shelf).toBeNull(); // Should include shelf field
+            expect(result.author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+            expect(result.shelf).toBeUndefined(); // Should include shelf field as undefined when not set
             expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockBooks).toHaveLength(3);
         });
@@ -819,12 +766,8 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
             const result = await booksService.create(newBook);
 
             expect(result.title).toBe('New Book 2');
-            expect(result.author).toEqual({
-                id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                firstName: 'John',
-                lastName: 'Doe',
-            });
-            expect(result.shelf).toBeNull(); // Should include shelf field
+            expect(result.author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+            expect(result.shelf).toBeUndefined(); // Should include shelf field as undefined when not set
             expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockBooks).toHaveLength(3);
         });

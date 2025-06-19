@@ -149,27 +149,10 @@ const options = {
                             example: 'Les Misérables',
                         },
                         author: {
-                            type: 'object',
-                            properties: {
-                                id: {
-                                    type: 'string',
-                                    format: 'uuid',
-                                    description: 'Author UUID',
-                                    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                                },
-                                firstName: {
-                                    type: 'string',
-                                    description: 'Author first name',
-                                    example: 'Victor',
-                                },
-                                lastName: {
-                                    type: 'string',
-                                    description: 'Author last name',
-                                    example: 'HUGO',
-                                },
-                            },
-                            required: ['id', 'firstName', 'lastName'],
-                            description: 'Complete author information',
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'Author UUID - use GET /authors/{id} to get author details',
+                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                         },
                         isbn: {
                             type: 'string',
@@ -217,19 +200,10 @@ const options = {
                             example: 'Les Misérables',
                         },
                         author: {
-                            oneOf: [
-                                {
-                                    type: 'string',
-                                    format: 'uuid',
-                                    description: 'Author UUID (for input)',
-                                    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                                },
-                                {
-                                    $ref: '#/components/schemas/Author',
-                                    description: 'Author object (for output)',
-                                },
-                            ],
-                            description: 'Author information - can be UUID for input or full object for output',
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'Author UUID - for both input and output. Use GET /authors/{id} to get author details',
+                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                         },
                         isbn: {
                             type: 'string',

@@ -5,48 +5,22 @@ import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple(page = 1) {
     const offset = getOffset(page, config.listPerPage);
-    const rows = await db.query('SELECT B.id, B.title, DATE_FORMAT(B.date, "%Y-%m-%d") as date, A.id as authorId, A.firstName, A.lastName, B.description, B.isbn, B.jacket, B.shelf FROM Books B JOIN Authors A ON A.id = B.author LIMIT ?, ?', [offset, config.listPerPage]);
+    const rows = await db.query('SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books LIMIT ?, ?', [offset, config.listPerPage]);
 
-    // Transform the result to have author as an object
-    const data = emptyOrRows(rows).map(book => ({
-        ...book,
-        author: {
-            id: book.authorId,
-            firstName: book.firstName,
-            lastName: book.lastName,
-        },
-        // Remove the separate fields
-        authorId: undefined,
-        firstName: undefined,
-        lastName: undefined,
-    }));
-
+    const data = emptyOrRows(rows);
     const meta = { page };
 
     return { data, meta };
 }
 
 async function getById(id) {
-    const rows = await db.query('SELECT B.id, B.title, DATE_FORMAT(B.date, "%Y-%m-%d") as date, A.id as authorId, A.firstName, A.lastName, B.description, B.isbn, B.jacket, B.shelf FROM Books B JOIN Authors A ON A.id = B.author WHERE B.id = ?', [id]);
+    const rows = await db.query('SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books WHERE id = ?', [id]);
 
     if (!rows[0]) {
         return null;
     }
 
-    // Transform the result to have author as an object
-    const book = rows[0];
-    return {
-        ...book,
-        author: {
-            id: book.authorId,
-            firstName: book.firstName,
-            lastName: book.lastName,
-        },
-        // Remove the separate fields
-        authorId: undefined,
-        firstName: undefined,
-        lastName: undefined,
-    };
+    return rows[0];
 }
 
 async function create(book) {

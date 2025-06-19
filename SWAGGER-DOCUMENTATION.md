@@ -104,6 +104,47 @@ http://localhost:3000/api-docs/swagger.json
 - 🎨 **Interface professionnelle** pour les développeurs
 - 📊 **Schémas validés** pour la cohérence des données
 
+## 🔄 **Modifications Récentes de l'API (Juin 2025) :**
+
+### **📚 API Books - Séparation des Responsabilités :**
+
+**🎯 Changement Important :** L'API Books a été modifiée pour suivre les meilleures pratiques de séparation des responsabilités entre services.
+
+**Avant :**
+```json
+{
+  "id": "book-id",
+  "title": "Titre du livre",
+  "author": {
+    "id": "author-id",
+    "firstName": "Prénom", 
+    "lastName": "Nom"
+  },
+  "shelf": "shelf-id"
+}
+```
+
+**Maintenant :**
+```json
+{
+  "id": "book-id",
+  "title": "Titre du livre", 
+  "author": "author-id",
+  "shelf": "shelf-id"
+}
+```
+
+**✅ Avantages :**
+- **Performance améliorée** : Évite les JOINs SQL complexes
+- **Séparation claire** : Chaque service gère sa propre entité
+- **Cohérence** : Même approche que pour le champ `shelf`
+- **Flexibilité** : L'appelant choisit s'il a besoin des détails
+
+**📱 Pour récupérer les détails de l'auteur :**
+```
+GET /authors/{author-id}
+```
+
 ---
 
 **🎉 Votre Library API dispose maintenant d'une documentation Swagger complète et professionnelle !**

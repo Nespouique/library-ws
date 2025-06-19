@@ -83,27 +83,10 @@ const options = {
                             example: 'Les Misérables',
                         },
                         author: {
-                            oneOf: [
-                                {
-                                    type: 'string',
-                                    format: 'uuid',
-                                    description: 'Author UUID',
-                                    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                                },
-                                {
-                                    type: 'object',
-                                    properties: {
-                                        id: {
-                                            type: 'string',
-                                            format: 'uuid',
-                                            description: 'Author UUID',
-                                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-                                        },
-                                    },
-                                    required: ['id'],
-                                },
-                            ],
-                            description: 'Author ID as string or object with id property',
+                            type: 'string',
+                            format: 'uuid',
+                            description: 'Author UUID',
+                            example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
                         },
                         isbn: {
                             type: 'string',

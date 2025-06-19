@@ -202,8 +202,8 @@ const booksService = {
         const authorId = typeof book.author === 'string' ? book.author : book.author?.id;
 
         // Validation PUT : tous les champs requis doivent être fournis
-        if (!book.title || !book.date || !authorId || !book.description || !book.isbn) {
-            const error = new Error('PUT requires complete object: title, date, author, description, and isbn are required');
+        if (!book.title || !authorId || !book.isbn) {
+            const error = new Error('PUT requires complete object: title, author, and isbn are required');
             error.statusCode = 400;
             throw error;
         }
@@ -872,7 +872,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 isbn: '9999999999999',
             };
 
-            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, date, author, description, and isbn are required');
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, author, and isbn are required');
         });
 
         test('should return false when book not found', async () => {
@@ -897,7 +897,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 isbn: '9999999999999',
             };
 
-            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, date, author, description, and isbn are required');
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, author, and isbn are required');
         });
 
         test('should throw error when author does not exist', async () => {

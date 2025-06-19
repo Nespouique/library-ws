@@ -59,8 +59,8 @@ async function update(id, book) {
     const authorId = typeof book.author === 'string' ? book.author : book.author?.id;
 
     // Validation PUT : tous les champs requis doivent être fournis
-    if (!book.title || !book.date || !authorId || !book.description || !book.isbn) {
-        const error = new Error('PUT requires complete object: title, date, author, description, and isbn are required');
+    if (!book.title || !authorId || !book.isbn) {
+        const error = new Error('PUT requires complete object: title, author, and isbn are required');
         error.statusCode = 400;
         throw error;
     }
@@ -78,18 +78,13 @@ async function update(id, book) {
         const error = new Error('Author does not exist');
         error.statusCode = 400;
         throw error;
-    } // Vérifie qu'aucun autre livre n'a le même ISBN
+    }
+
+    // Vérifie qu'aucun autre livre n'a le même ISBN (exclut le livre actuel)
     const existing = await db.query('SELECT id FROM Books WHERE isbn = ? AND id != ?', [book.isbn, id]);
     if (existing.length) {
         const error = new Error('Book/ISBN already exists');
         error.statusCode = 409;
-        throw error;
-    }
-
-    // Le champ jacket n'est pas modifiable via cette route
-    if (book.jacket !== undefined) {
-        const error = new Error('Jacket field is read-only. Use /books/{id}/jacket endpoint to manage jacket images');
-        error.statusCode = 400;
         throw error;
     }
 

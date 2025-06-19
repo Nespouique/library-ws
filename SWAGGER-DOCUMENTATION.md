@@ -111,36 +111,40 @@ http://localhost:3000/api-docs/swagger.json
 **🎯 Changement Important :** L'API Books a été modifiée pour suivre les meilleures pratiques de séparation des responsabilités entre services.
 
 **Avant :**
+
 ```json
 {
-  "id": "book-id",
-  "title": "Titre du livre",
-  "author": {
-    "id": "author-id",
-    "firstName": "Prénom", 
-    "lastName": "Nom"
-  },
-  "shelf": "shelf-id"
+    "id": "book-id",
+    "title": "Titre du livre",
+    "author": {
+        "id": "author-id",
+        "firstName": "Prénom",
+        "lastName": "Nom"
+    },
+    "shelf": "shelf-id"
 }
 ```
 
 **Maintenant :**
+
 ```json
 {
-  "id": "book-id",
-  "title": "Titre du livre", 
-  "author": "author-id",
-  "shelf": "shelf-id"
+    "id": "book-id",
+    "title": "Titre du livre",
+    "author": "author-id",
+    "shelf": "shelf-id"
 }
 ```
 
 **✅ Avantages :**
+
 - **Performance améliorée** : Évite les JOINs SQL complexes
 - **Séparation claire** : Chaque service gère sa propre entité
 - **Cohérence** : Même approche que pour le champ `shelf`
 - **Flexibilité** : L'appelant choisit s'il a besoin des détails
 
 **📱 Pour récupérer les détails de l'auteur :**
+
 ```
 GET /authors/{author-id}
 ```

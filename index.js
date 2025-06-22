@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import books from './routes/books.js';
 import authors from './routes/authors.js';
 import shelves from './routes/shelves.js';
@@ -10,6 +11,30 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Configuration CORS
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permettre les requêtes sans origin (comme les apps mobiles, Postman, etc.)
+        if (!origin) return callback(null, true);
+
+        // Pour le développement local et production
+        const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000', 'http://localhost:8080', 'https://library-ws.hallais.bzh'];
+
+        // Permettre tous les domaines en développement ou spécifiques en production
+        if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Plus permissif pour permettre aux contributeurs d'utiliser l'API
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    optionsSuccessStatus: 200, // Support pour anciens navigateurs
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(
@@ -71,5 +96,6 @@ app.use((err, req, res, _next) => {
 });
 
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+    console.log(`🚀 Library API server ready on http://localhost:${port}`);
+    console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
 });

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple(page = 1) {
     const offset = getOffset(page, config.listPerPage);
-    const rows = await db.query('SELECT id, firstName, lastName FROM Authors LIMIT ?, ?', [offset, config.listPerPage]);
+    const rows = await db.query(`SELECT id, firstName, lastName FROM Authors LIMIT ${offset}, ${config.listPerPage}`);
     const data = emptyOrRows(rows);
     const meta = { page };
 

@@ -122,6 +122,32 @@ npm run validate
 
 This API is designed to be the backend for an Android book barcode scanning application with complete image management capabilities. It can be easily deployed and integrated with any frontend.
 
+## 🐳 Docker Deployment
+
+The application is fully containerized and can be deployed easily using Docker Compose:
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd library-ws
+
+# Start the application with Docker
+docker-compose up -d
+
+# The API will be available at http://localhost:3001
+```
+
+### What's Included
+
+- **Node.js Application**: Runs on port 3001
+- **MySQL Database**: Pre-configured with sample data
+- **Volume Persistence**: Database and uploaded images are persisted
+- **Health Checks**: Automatic service monitoring
+
+For detailed Docker deployment instructions, see [DOCKER-DEPLOYMENT.md](DOCKER-DEPLOYMENT.md).
+
 ### File Structure
 
 ```

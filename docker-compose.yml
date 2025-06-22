@@ -1,0 +1,57 @@
+services:
+    library-ws:
+        image: nespouique/library-ws:1.1.0
+        container_name: library-ws-app
+        ports:
+            - '3001:3000'
+        environment:
+            - DB_HOST=mysql
+            - DB_PORT=3306
+            - DB_USER=library_user
+            - DB_PASSWORD=SecurePassword123
+            - DB_NAME=library_db
+            - NODE_ENV=production
+            - PORT=3000
+            - LIST_PER_PAGE=10
+        depends_on:
+            mysql:
+                condition: service_healthy
+        volumes:
+            - uploads_data:/app/uploads
+        restart: unless-stopped
+        networks:
+            - library-network
+
+    mysql:
+        image: mysql:8.0
+        container_name: library-ws-mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=RootPassword123
+            - MYSQL_DATABASE=library_db
+            - MYSQL_USER=library_user
+            - MYSQL_PASSWORD=SecurePassword123
+        ports:
+            - '3306:3306'
+        volumes:
+            - mysql_data:/var/lib/mysql
+            - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-pRootPassword123']
+            timeout: 20s
+            retries: 10
+            interval: 10s
+            start_period: 40s
+        restart: unless-stopped
+        networks:
+            - library-network
+        command: --default-authentication-plugin=mysql_native_password --innodb-buffer-pool-size=128M
+
+volumes:
+    mysql_data:
+        driver: local
+    uploads_data:
+        driver: local
+
+networks:
+    library-network:
+        driver: bridge

@@ -1,6 +1,6 @@
 services:
     library-ws:
-        image: nespouique/library-ws:1.1.0
+        image: nespouique/library-ws:latest
         container_name: library-ws-app
         ports:
             - '3001:3000'

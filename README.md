@@ -124,7 +124,15 @@ This API is designed to be the backend for an Android book barcode scanning appl
 
 ## 🐳 Docker Deployment
 
-The application is fully containerized and can be deployed easily using Docker Compose:
+The application is fully containerized and available on Docker Hub at [nespouique/library-ws](https://hub.docker.com/repository/docker/nespouique/library-ws).
+
+### Docker Hub Image
+
+The official Docker image is automatically built and pushed to Docker Hub:
+
+- **Repository**: `nespouique/library-ws:latest`
+- **Base Image**: Node.js Alpine
+- **Size**: Optimized for production
 
 ### Quick Start
 
@@ -139,14 +147,68 @@ docker-compose up -d
 # The API will be available at http://localhost:3001
 ```
 
+### First Deployment Setup
+
+⚠️ **Important**: Before the first deployment, ensure the `init.sql` file is present in the `./database/` directory on the host machine. This file is required for the volume binding to work correctly and initialize the MySQL database with the proper schema.
+
+```bash
+# Verify the init.sql file exists
+ls -la database/init.sql
+
+# If missing, ensure you have the database initialization script
+# The docker-compose.yml maps: ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+```
+
+### Docker Architecture
+
+The application uses a multi-container setup:
+
+- **library-ws**: Main Node.js application (port 3001)
+    - Image: `nespouique/library-ws:latest`
+    - Environment: Production-ready configuration
+    - Volumes: Persistent uploads storage
+- **mysql**: MySQL 8.0 database (port 3306)
+    - Image: `mysql:8.0`
+    - Initialization: Automatic schema setup via `init.sql`
+    - Volumes: Persistent database storage
+
+### Environment Configuration
+
+The Docker setup includes production-ready environment variables:
+
+```yaml
+environment:
+    - DB_HOST=mysql
+    - DB_PORT=3306
+    - DB_USER=library_user
+    - DB_PASSWORD=SecurePassword123
+    - DB_NAME=library_db
+    - NODE_ENV=production
+    - PORT=3000
+    - LIST_PER_PAGE=10
+```
+
+### Volume Management
+
+```yaml
+volumes:
+    mysql_data: # Database persistence
+    uploads_data: # Image uploads persistence
+```
+
+### Health Checks & Dependencies
+
+- **MySQL Health Check**: Ensures database is ready before starting the application
+- **Service Dependencies**: Application waits for MySQL to be healthy
+- **Restart Policy**: `unless-stopped` for both services
+
 ### What's Included
 
-- **Node.js Application**: Runs on port 3001
-- **MySQL Database**: Pre-configured with sample data
-- **Volume Persistence**: Database and uploaded images are persisted
-- **Health Checks**: Automatic service monitoring
-
-For detailed Docker deployment instructions, see [DOCKER-DEPLOYMENT.md](DOCKER-DEPLOYMENT.md).
+- **Node.js Application**: Runs on port 3001 with production optimizations
+- **MySQL Database**: Pre-configured with sample data via `init.sql`
+- **Volume Persistence**: Database and uploaded images are persisted across restarts
+- **Health Checks**: Automatic service monitoring and dependency management
+- **Network Isolation**: Services communicate via dedicated Docker network
 
 ### File Structure
 

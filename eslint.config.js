@@ -1,4 +1,6 @@
 // ESLint configuration for Library Web Service API
+import prettierConfig from 'eslint-config-prettier';
+
 export default [
     {
         languageOptions: {
@@ -28,12 +30,7 @@ export default [
             'no-var': 'error', // Require let/const instead of var
             'prefer-const': 'error', // Prefer const when variable is never reassigned
 
-            // Style (will be handled by Prettier mostly)
-            quotes: ['error', 'single'],
-            semi: ['error', 'always'],
-
             // ES6+
-            'arrow-spacing': 'error',
             'no-duplicate-imports': 'error',
         },
     },
@@ -56,4 +53,6 @@ export default [
             'no-unused-vars': 'off', // More flexible for test files
         },
     },
+    // Apply Prettier config to disable conflicting rules
+    prettierConfig,
 ];

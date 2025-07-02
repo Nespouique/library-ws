@@ -21,9 +21,11 @@ L'application Library-WS gère maintenant automatiquement l'initialisation de la
 ## Utilisation
 
 ### Démarrage normal
+
 ```bash
 npm start
 ```
+
 L'initialisation se fait automatiquement au démarrage.
 
 ### Scripts utilitaires
@@ -66,19 +68,22 @@ Exemple de logs lors du premier démarrage :
 Si vous migrez depuis l'ancienne version qui utilisait `docker-entrypoint-initdb.d` :
 
 1. Supprimez le volume MySQL existant si vous voulez repartir à zéro :
-   ```bash
-   docker-compose down -v
-   ```
+
+    ```bash
+    docker-compose down -v
+    ```
 
 2. Ou gardez vos données existantes, le système détectera automatiquement que les tables existent déjà
 
 ## Structure des tables créées
 
-Le système crée exactement les mêmes tables que l'ancien script `init.sql` :
+Le système crée automatiquement les tables suivantes :
 
 - **Authors** : Table des auteurs avec contrainte d'unicité sur (firstName, lastName)
 - **Shelves** : Table des étagères
 - **Books** : Table des livres avec clés étrangères vers Authors et Shelves
+
+Pour plus de détails sur le schéma complet, consultez [DATABASE-SCHEMA.md](DATABASE-SCHEMA.md).
 
 ## Gestion d'erreurs
 

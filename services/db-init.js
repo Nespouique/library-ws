@@ -44,18 +44,18 @@ CREATE TABLE IF NOT EXISTS Books (
 const SAMPLE_AUTHORS = [
     ['a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'John', 'Doe'],
     ['b2c3d4e5-f6g7-8901-bcde-f12345678901', 'Jane', 'Smith'],
-    ['c3d4e5f6-g7h8-9012-cdef-123456789012', 'Bob', 'Johnson']
+    ['c3d4e5f6-g7h8-9012-cdef-123456789012', 'Bob', 'Johnson'],
 ];
 
 const SAMPLE_SHELVES = [
     ['d4e5f6g7-h8i9-0123-def0-234567890123', 'Étagère 1'],
     ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Étagère 2'],
-    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Étagère 3']
+    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Étagère 3'],
 ];
 
 const SAMPLE_BOOKS = [
     ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Book 1', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '1234567890123', '2024-01-01', 'Description 1', '/cover1.jpg', 'd4e5f6g7-h8i9-0123-def0-234567890123'],
-    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Book 2', 'b2c3d4e5-f6g7-8901-bcde-f12345678901', '9876543210987', '2024-02-01', 'Description 2', '/cover2.jpg', null]
+    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Book 2', 'b2c3d4e5-f6g7-8901-bcde-f12345678901', '9876543210987', '2024-02-01', 'Description 2', '/cover2.jpg', null],
 ];
 
 /**
@@ -81,19 +81,19 @@ async function tableExists(connection, tableName) {
 async function createTables(connection) {
     try {
         console.log('📋 Création des tables...');
-        
+
         // Créer la table Authors
         await connection.execute(CREATE_AUTHORS_TABLE);
         console.log('✅ Table Authors créée');
-        
+
         // Créer la table Shelves
         await connection.execute(CREATE_SHELVES_TABLE);
         console.log('✅ Table Shelves créée');
-        
+
         // Créer la table Books (doit être créée après Authors et Shelves à cause des clés étrangères)
         await connection.execute(CREATE_BOOKS_TABLE);
         console.log('✅ Table Books créée');
-        
+
         return true;
     } catch (error) {
         console.error('❌ Erreur lors de la création des tables:', error);
@@ -106,52 +106,42 @@ async function createTables(connection) {
  */
 async function insertSampleData(connection) {
     try {
-        console.log('📦 Insertion des données d\'exemple...');
-        
+        console.log("📦 Insertion des données d'exemple...");
+
         // Vérifier si les tables contiennent déjà des données
         const [authorCount] = await connection.execute('SELECT COUNT(*) as count FROM Authors');
         const [shelfCount] = await connection.execute('SELECT COUNT(*) as count FROM Shelves');
         const [bookCount] = await connection.execute('SELECT COUNT(*) as count FROM Books');
-        
+
         if (authorCount[0].count === 0) {
             // Insérer les auteurs d'exemple
             for (const author of SAMPLE_AUTHORS) {
-                await connection.execute(
-                    'INSERT IGNORE INTO Authors (id, firstName, lastName) VALUES (?, ?, ?)',
-                    author
-                );
+                await connection.execute('INSERT IGNORE INTO Authors (id, firstName, lastName) VALUES (?, ?, ?)', author);
             }
-            console.log('✅ Auteurs d\'exemple insérés');
+            console.log("✅ Auteurs d'exemple insérés");
         }
-        
+
         if (shelfCount[0].count === 0) {
             // Insérer les étagères d'exemple
             for (const shelf of SAMPLE_SHELVES) {
-                await connection.execute(
-                    'INSERT IGNORE INTO Shelves (id, name) VALUES (?, ?)',
-                    shelf
-                );
+                await connection.execute('INSERT IGNORE INTO Shelves (id, name) VALUES (?, ?)', shelf);
             }
-            console.log('✅ Étagères d\'exemple insérées');
+            console.log("✅ Étagères d'exemple insérées");
         }
-        
+
         if (bookCount[0].count === 0) {
             // Insérer les livres d'exemple
             for (const book of SAMPLE_BOOKS) {
-                await connection.execute(
-                    'INSERT IGNORE INTO Books (id, title, author, isbn, date, description, jacket, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    book
-                );
+                await connection.execute('INSERT IGNORE INTO Books (id, title, author, isbn, date, description, jacket, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', book);
             }
-            console.log('✅ Livres d\'exemple insérés');
+            console.log("✅ Livres d'exemple insérés");
         }
-        
+
         if (authorCount[0].count > 0 || shelfCount[0].count > 0 || bookCount[0].count > 0) {
-            console.log('ℹ️ Des données existent déjà, pas d\'insertion de données d\'exemple');
+            console.log("ℹ️ Des données existent déjà, pas d'insertion de données d'exemple");
         }
-        
     } catch (error) {
-        console.error('❌ Erreur lors de l\'insertion des données d\'exemple:', error);
+        console.error("❌ Erreur lors de l'insertion des données d'exemple:", error);
         // Ne pas faire échouer l'initialisation si l'insertion des données d'exemple échoue
     }
 }
@@ -162,36 +152,35 @@ async function insertSampleData(connection) {
  */
 async function initializeDatabase() {
     let connection = null;
-    
+
     try {
         console.log('🔄 Initialisation de la base de données...');
-        
+
         // Créer une connexion directe (pas via le pool)
         connection = await mysql.createConnection({
             ...config.db,
             // Augmenter les timeouts pour les opérations d'initialisation
             acquireTimeout: 60000,
-            timeout: 60000
+            timeout: 60000,
         });
-        
+
         // Vérifier si les tables existent
         const authorsExists = await tableExists(connection, 'Authors');
         const shelvesExists = await tableExists(connection, 'Shelves');
         const booksExists = await tableExists(connection, 'Books');
-        
+
         if (!authorsExists || !shelvesExists || !booksExists) {
             console.log('🏗️ Tables manquantes détectées, création en cours...');
             await createTables(connection);
             await insertSampleData(connection);
             console.log('✅ Base de données initialisée avec succès!');
         } else {
-            console.log('✅ Toutes les tables existent déjà, pas d\'initialisation nécessaire');
+            console.log("✅ Toutes les tables existent déjà, pas d'initialisation nécessaire");
         }
-        
+
         return true;
-        
     } catch (error) {
-        console.error('❌ Erreur lors de l\'initialisation de la base de données:', error);
+        console.error("❌ Erreur lors de l'initialisation de la base de données:", error);
         throw error;
     } finally {
         if (connection) {
@@ -205,12 +194,12 @@ async function initializeDatabase() {
  */
 async function waitForDatabase(maxRetries = 30, delayMs = 2000) {
     let retries = 0;
-    
+
     while (retries < maxRetries) {
         try {
             const connection = await mysql.createConnection({
                 ...config.db,
-                connectTimeout: 5000
+                connectTimeout: 5000,
             });
             await connection.end();
             console.log('✅ Connexion à la base de données établie');
@@ -218,12 +207,12 @@ async function waitForDatabase(maxRetries = 30, delayMs = 2000) {
         } catch (error) {
             retries++;
             console.log(`⏳ Tentative de connexion ${retries}/${maxRetries} à la base de données...`);
-            
+
             if (retries >= maxRetries) {
                 console.error('❌ Impossible de se connecter à la base de données après', maxRetries, 'tentatives');
-                throw new Error('Database connection timeout');
+                throw new Error('Database connection timeout', error);
             }
-            
+
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }
     }
@@ -231,5 +220,5 @@ async function waitForDatabase(maxRetries = 30, delayMs = 2000) {
 
 export default {
     initializeDatabase,
-    waitForDatabase
+    waitForDatabase,
 };

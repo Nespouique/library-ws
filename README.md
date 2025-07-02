@@ -152,12 +152,14 @@ docker-compose up -d
 🎉 **New Feature**: The application now handles database initialization automatically! No more manual script deployment.
 
 **What happens on first startup:**
+
 1. Application waits for MySQL to be available
 2. Checks if required tables exist
 3. Creates tables automatically if needed
 4. Inserts sample data if database is empty
 
 **Benefits:**
+
 - ✅ No manual script deployment required
 - ✅ Simplified deployment process
 - ✅ Robust connection handling with retries
@@ -211,7 +213,7 @@ volumes:
 ### What's Included
 
 - **Node.js Application**: Runs on port 3001 with production optimizations
-- **MySQL Database**: Pre-configured with sample data via `init.sql`
+- **MySQL Database**: Automatic schema initialization with sample data
 - **Volume Persistence**: Database and uploaded images are persisted across restarts
 - **Health Checks**: Automatic service monitoring and dependency management
 - **Network Isolation**: Services communicate via dedicated Docker network

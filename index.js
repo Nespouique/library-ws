@@ -6,6 +6,7 @@ import shelves from './routes/shelves.js';
 import jackets from './routes/jackets.js';
 import dotenv from 'dotenv';
 import { specs, swaggerUi } from './config/swagger.js';
+import dbInit from './services/db-init.js';
 
 dotenv.config();
 
@@ -95,7 +96,29 @@ app.use((err, req, res, _next) => {
     return;
 });
 
-app.listen(port, () => {
-    console.log(`🚀 Library API server ready on http://localhost:${port}`);
-    console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
-});
+// Fonction d'initialisation et de démarrage du serveur
+async function startServer() {
+    try {
+        console.log('🔄 Démarrage de l\'application Library API...');
+        
+        // Attendre que la base de données soit disponible
+        console.log('🔌 Vérification de la connexion à la base de données...');
+        await dbInit.waitForDatabase();
+        
+        // Initialiser la base de données (créer les tables si nécessaire)
+        await dbInit.initializeDatabase();
+        
+        // Démarrer le serveur
+        app.listen(port, () => {
+            console.log(`🚀 Library API server ready on http://localhost:${port}`);
+            console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
+        });
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du démarrage de l\'application:', error);
+        process.exit(1);
+    }
+}
+
+// Démarrer l'application
+startServer();

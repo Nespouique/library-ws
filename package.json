@@ -4,6 +4,8 @@
     "private": true,
     "scripts": {
         "start": "node index.js",
+        "db:init": "node scripts/db-management.js init",
+        "db:check": "node scripts/db-management.js check",
         "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --detectOpenHandles --forceExit",
         "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --watch",
         "lint": "eslint .",

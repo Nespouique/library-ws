@@ -147,17 +147,23 @@ docker-compose up -d
 # The API will be available at http://localhost:3001
 ```
 
-### First Deployment Setup
+### ✨ Automatic Database Initialization
 
-⚠️ **Important**: Before the first deployment, ensure the `init.sql` file is present in the `./database/` directory on the host machine. This file is required for the volume binding to work correctly and initialize the MySQL database with the proper schema.
+🎉 **New Feature**: The application now handles database initialization automatically! No more manual script deployment.
 
-```bash
-# Verify the init.sql file exists
-ls -la database/init.sql
+**What happens on first startup:**
+1. Application waits for MySQL to be available
+2. Checks if required tables exist
+3. Creates tables automatically if needed
+4. Inserts sample data if database is empty
 
-# If missing, ensure you have the database initialization script
-# The docker-compose.yml maps: ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-```
+**Benefits:**
+- ✅ No manual script deployment required
+- ✅ Simplified deployment process
+- ✅ Robust connection handling with retries
+- ✅ Works with existing databases
+
+See [DATABASE-INIT.md](DATABASE-INIT.md) for detailed information.
 
 ### Docker Architecture
 
@@ -167,9 +173,9 @@ The application uses a multi-container setup:
     - Image: `nespouique/library-ws:latest`
     - Environment: Production-ready configuration
     - Volumes: Persistent uploads storage
+    - **Auto-initialization**: Creates database schema on startup
 - **mysql**: MySQL 8.0 database (port 3306)
     - Image: `mysql:8.0`
-    - Initialization: Automatic schema setup via `init.sql`
     - Volumes: Persistent database storage
 
 ### Environment Configuration

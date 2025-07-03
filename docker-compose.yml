@@ -3,7 +3,7 @@ services:
         image: nespouique/library-ws:latest
         container_name: library-ws-app
         ports:
-            - '3001:3000'
+            - '3000:3000'
         environment:
             - DB_HOST=mysql
             - DB_PORT=3306

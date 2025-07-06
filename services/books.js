@@ -1,16 +1,11 @@
 import db from './db-pool.js';
-import { getOffset, emptyOrRows } from '../utils/helper.js';
-import config from '../config/config.js';
+import { emptyOrRows } from '../utils/helper.js';
 import { v4 as uuidv4 } from 'uuid';
 
-async function getMultiple(page = 1) {
-    const offset = getOffset(page, config.listPerPage);
-    const rows = await db.query(`SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books LIMIT ${offset}, ${config.listPerPage}`);
+async function getMultiple() {
+    const rows = await db.query(`SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books`);
 
-    const data = emptyOrRows(rows);
-    const meta = { page };
-
-    return { data, meta };
+    return emptyOrRows(rows);
 }
 
 async function getById(id) {

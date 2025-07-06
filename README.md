@@ -8,14 +8,12 @@ Node.js/Express REST API for library management with complete CRUD operations fo
 
 - ✅ **Complete CRUD** : Create, Read, Update, Delete
 - ✅ **Validation** : No duplicates (unique first name + last name)
-- ✅ **Pagination** : Pagination support for lists
 - ✅ **Error handling** : Proper HTTP status codes
 
 ### Books
 
 - ✅ **Complete CRUD** : Create, Read, Update, Delete
 - ✅ **Validation** : Unique ISBN, author must exist
-- ✅ **Pagination** : Pagination support for lists
 - ✅ **Relationships** : Foreign key link to Authors table
 
 ### 📸 Book Jacket Images (NEW)

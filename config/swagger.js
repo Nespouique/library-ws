@@ -244,66 +244,6 @@ const options = {
                         },
                     },
                 },
-                PaginatedAuthors: {
-                    type: 'object',
-                    properties: {
-                        data: {
-                            type: 'array',
-                            items: {
-                                $ref: '#/components/schemas/Author',
-                            },
-                        },
-                        meta: {
-                            type: 'object',
-                            properties: {
-                                page: {
-                                    type: 'integer',
-                                    example: 1,
-                                },
-                            },
-                        },
-                    },
-                },
-                PaginatedBooks: {
-                    type: 'object',
-                    properties: {
-                        data: {
-                            type: 'array',
-                            items: {
-                                $ref: '#/components/schemas/BookResponse',
-                            },
-                        },
-                        meta: {
-                            type: 'object',
-                            properties: {
-                                page: {
-                                    type: 'integer',
-                                    example: 1,
-                                },
-                            },
-                        },
-                    },
-                },
-                PaginatedShelves: {
-                    type: 'object',
-                    properties: {
-                        data: {
-                            type: 'array',
-                            items: {
-                                $ref: '#/components/schemas/Shelf',
-                            },
-                        },
-                        meta: {
-                            type: 'object',
-                            properties: {
-                                page: {
-                                    type: 'integer',
-                                    example: 1,
-                                },
-                            },
-                        },
-                    },
-                },
             },
         },
         tags: [

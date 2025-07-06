@@ -1,6 +1,6 @@
 // Simple unit tests with manual mocks
 import { describe, test, expect, beforeEach } from '@jest/globals';
-import { getOffset, emptyOrRows } from '../utils/helper.js';
+import { emptyOrRows } from '../utils/helper.js';
 
 // Mock data for testing with UUIDs
 const mockAuthors = [
@@ -61,11 +61,8 @@ function generateTestUuid() {
 
 // Simple service implementations with mock data
 const authorsService = {
-    async getMultiple(page = 1) {
-        const listPerPage = 10;
-        const offset = getOffset(page, listPerPage);
-        const data = emptyOrRows(mockAuthors.slice(offset, offset + listPerPage));
-        return { data, meta: { page } };
+    async getMultiple() {
+        return emptyOrRows([...mockAuthors]);
     },
 
     async getById(id) {
@@ -151,11 +148,8 @@ const authorsService = {
 };
 
 const booksService = {
-    async getMultiple(page = 1) {
-        const listPerPage = 10;
-        const offset = getOffset(page, listPerPage);
-        const data = emptyOrRows(mockBooks.slice(offset, offset + listPerPage));
-        return { data, meta: { page } };
+    async getMultiple() {
+        return emptyOrRows([...mockBooks]);
     },
 
     async getById(id) {
@@ -315,11 +309,8 @@ const booksService = {
 };
 
 const shelvesService = {
-    async getMultiple(page = 1) {
-        const listPerPage = 10;
-        const offset = getOffset(page, listPerPage);
-        const data = emptyOrRows(mockShelves.slice(offset, offset + listPerPage));
-        return { data, meta: { page } };
+    async getMultiple() {
+        return emptyOrRows([...mockShelves]);
     },
 
     async getById(id) {
@@ -438,42 +429,17 @@ describe('Authors Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('getMultiple', () => {
-        test('should return paginated authors', async () => {
-            const result = await authorsService.getMultiple(1);
+        test('should return all authors', async () => {
+            const result = await authorsService.getMultiple();
 
-            expect(result).toEqual({
-                data: mockAuthors,
-                meta: { page: 1 },
-            });
+            expect(result).toEqual(mockAuthors);
         });
         test('should handle empty results', async () => {
             mockAuthors.length = 0; // Clear mock data
 
-            const result = await authorsService.getMultiple(1);
+            const result = await authorsService.getMultiple();
 
-            expect(result).toEqual({
-                data: [],
-                meta: { page: 1 },
-            });
-        });
-
-        test('should handle pagination correctly', async () => {
-            // Add more authors for pagination test
-            for (let i = 4; i <= 15; i++) {
-                mockAuthors.push({
-                    id: generateTestUuid(),
-                    firstName: `Author${i}`,
-                    lastName: `Last${i}`,
-                });
-            }
-
-            const page1 = await authorsService.getMultiple(1);
-            const page2 = await authorsService.getMultiple(2);
-
-            expect(page1.data).toHaveLength(10);
-            expect(page1.meta.page).toBe(1);
-            expect(page2.data).toHaveLength(5);
-            expect(page2.meta.page).toBe(2);
+            expect(result).toEqual([]);
         });
     });
 
@@ -701,12 +667,11 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('getMultiple', () => {
-        test('should return paginated books with author IDs', async () => {
-            const result = await booksService.getMultiple(1);
+        test('should return all books with author IDs', async () => {
+            const result = await booksService.getMultiple();
 
-            expect(result.data).toHaveLength(2);
-            expect(result.data[0].author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
-            expect(result.meta).toEqual({ page: 1 });
+            expect(result).toHaveLength(2);
+            expect(result[0].author).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
         });
     });
 
@@ -1123,14 +1088,6 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
 });
 
 describe('Helper Functions', () => {
-    test('getOffset should calculate correct offset', () => {
-        expect(getOffset(1, 10)).toBe(0);
-        expect(getOffset(2, 10)).toBe(10);
-        expect(getOffset(3, 5)).toBe(10);
-        expect(getOffset(1, 5)).toBe(0);
-        expect(getOffset(4, 10)).toBe(30);
-    });
-
     test('emptyOrRows should handle null/undefined', () => {
         expect(emptyOrRows(null)).toEqual([]);
         expect(emptyOrRows(undefined)).toEqual([]);
@@ -1183,24 +1140,18 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
     });
 
     describe('getMultiple', () => {
-        test('should return paginated shelves', async () => {
-            const result = await shelvesService.getMultiple(1);
+        test('should return all shelves', async () => {
+            const result = await shelvesService.getMultiple();
 
-            expect(result).toEqual({
-                data: mockShelves,
-                meta: { page: 1 },
-            });
+            expect(result).toEqual(mockShelves);
         });
 
         test('should handle empty results', async () => {
             mockShelves.length = 0; // Clear mock data
 
-            const result = await shelvesService.getMultiple(1);
+            const result = await shelvesService.getMultiple();
 
-            expect(result).toEqual({
-                data: [],
-                meta: { page: 1 },
-            });
+            expect(result).toEqual([]);
         });
     });
 

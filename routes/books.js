@@ -6,24 +6,18 @@ const router = express.Router();
  * @swagger
  * /books:
  *   get:
- *     summary: Get all books with pagination
- *     description: Retrieve a paginated list of all books in the library
+ *     summary: Get all books
+ *     description: Retrieve all books in the library
  *     tags: [Books]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Page number for pagination
  *     responses:
  *       200:
  *         description: Successfully retrieved books
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PaginatedBooks'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/BookResponse'
  *       500:
  *         description: Internal server error
  *         content:
@@ -31,10 +25,10 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-// GET books (paginated)
+// GET books
 router.get('/', async function (req, res, next) {
     try {
-        const result = await books.getMultiple(req.query.page);
+        const result = await books.getMultiple();
         res.json(result);
     } catch (err) {
         next(err);
@@ -62,10 +56,7 @@ router.get('/', async function (req, res, next) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   $ref: '#/components/schemas/BookResponse'
+ *               $ref: '#/components/schemas/BookResponse'
  *       404:
  *         description: Book not found
  *         content:
@@ -84,7 +75,7 @@ router.get('/:id', async function (req, res, next) {
     try {
         const book = await books.getById(req.params.id);
         if (!book) return res.status(404).json({ message: 'Book not found' });
-        res.json({ data: book });
+        res.json(book);
     } catch (err) {
         next(err);
     }
@@ -109,10 +100,7 @@ router.get('/:id', async function (req, res, next) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   $ref: '#/components/schemas/BookResponse'
+ *               $ref: '#/components/schemas/BookResponse'
  *       400:
  *         description: Author does not exist
  *         content:
@@ -136,7 +124,7 @@ router.get('/:id', async function (req, res, next) {
 router.post('/', async function (req, res, next) {
     try {
         const created = await books.create(req.body);
-        res.status(201).json({ data: created });
+        res.status(201).json(created);
     } catch (err) {
         next(err);
     }

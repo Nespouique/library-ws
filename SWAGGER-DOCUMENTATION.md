@@ -78,8 +78,7 @@ http://localhost:3000/api-docs/swagger.json
 
 - `Author` - Structure complète des auteurs
 - `Book` - Structure complète des livres
-- `PaginatedAuthors` - Réponse paginée des auteurs
-- `PaginatedBooks` - Réponse paginée des livres
+- `Shelf` - Structure complète des étagères
 - `Error` - Format standardisé des erreurs
 
 ## 🎯 **Utilisation Recommandée :**

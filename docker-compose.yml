@@ -12,7 +12,6 @@ services:
             - DB_NAME=library_db
             - NODE_ENV=production
             - PORT=3000
-            - LIST_PER_PAGE=10
         depends_on:
             mysql:
                 condition: service_healthy

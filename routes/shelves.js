@@ -6,24 +6,18 @@ const router = express.Router();
  * @swagger
  * /shelves:
  *   get:
- *     summary: Get all shelves with pagination
- *     description: Retrieve a paginated list of all shelves in the library
+ *     summary: Get all shelves
+ *     description: Retrieve all shelves in the library
  *     tags: [Shelves]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Page number for pagination
  *     responses:
  *       200:
  *         description: Successfully retrieved shelves
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PaginatedShelves'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Shelf'
  *       500:
  *         description: Internal server error
  *         content:
@@ -31,10 +25,10 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-// GET shelves (paginated)
+// GET shelves
 router.get('/', async function (req, res, next) {
     try {
-        const result = await shelves.getMultiple(req.query.page);
+        const result = await shelves.getMultiple();
         res.json(result);
     } catch (err) {
         next(err);
@@ -62,10 +56,7 @@ router.get('/', async function (req, res, next) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   $ref: '#/components/schemas/Shelf'
+ *               $ref: '#/components/schemas/Shelf'
  *       404:
  *         description: Shelf not found
  *         content:
@@ -84,7 +75,7 @@ router.get('/:id', async function (req, res, next) {
     try {
         const shelf = await shelves.getById(req.params.id);
         if (!shelf) return res.status(404).json({ message: 'Shelf not found' });
-        res.json({ data: shelf });
+        res.json(shelf);
     } catch (err) {
         next(err);
     }
@@ -116,10 +107,7 @@ router.get('/:id', async function (req, res, next) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   $ref: '#/components/schemas/Shelf'
+ *               $ref: '#/components/schemas/Shelf'
  *       400:
  *         description: Bad request
  *         content:
@@ -143,7 +131,7 @@ router.get('/:id', async function (req, res, next) {
 router.post('/', async function (req, res, next) {
     try {
         const created = await shelves.create(req.body);
-        res.status(201).json({ data: created });
+        res.status(201).json(created);
     } catch (err) {
         next(err);
     }

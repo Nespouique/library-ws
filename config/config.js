@@ -8,7 +8,6 @@ const config = {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
     },
-    listPerPage: parseInt(process.env.LIST_PER_PAGE) || 10,
     images: {
         maxFileSize: 10 * 1024 * 1024, // 10MB
         allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],

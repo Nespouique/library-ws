@@ -6,24 +6,18 @@ const router = express.Router();
  * @swagger
  * /authors:
  *   get:
- *     summary: Get all authors with pagination
- *     description: Retrieve a paginated list of all authors in the library
+ *     summary: Get all authors
+ *     description: Retrieve all authors in the library
  *     tags: [Authors]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Page number for pagination
  *     responses:
  *       200:
  *         description: Successfully retrieved authors
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PaginatedAuthors'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Author'
  *       500:
  *         description: Internal server error
  *         content:
@@ -31,10 +25,10 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-// GET authors (paginated)
+// GET authors
 router.get('/', async function (req, res, next) {
     try {
-        const result = await authors.getMultiple(req.query.page);
+        const result = await authors.getMultiple();
         res.json(result);
     } catch (err) {
         next(err);
@@ -62,10 +56,7 @@ router.get('/', async function (req, res, next) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   $ref: '#/components/schemas/Author'
+ *               $ref: '#/components/schemas/Author'
  *       404:
  *         description: Author not found
  *         content:
@@ -84,7 +75,7 @@ router.get('/:id', async function (req, res, next) {
     try {
         const author = await authors.getById(req.params.id);
         if (!author) return res.status(404).json({ message: 'Author not found' });
-        res.json({ data: author });
+        res.json(author);
     } catch (err) {
         next(err);
     }
@@ -121,10 +112,7 @@ router.get('/:id', async function (req, res, next) {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   $ref: '#/components/schemas/Author'
+ *               $ref: '#/components/schemas/Author'
  *       409:
  *         description: Author already exists
  *         content:
@@ -142,7 +130,7 @@ router.get('/:id', async function (req, res, next) {
 router.post('/', async function (req, res, next) {
     try {
         const created = await authors.create(req.body);
-        res.status(201).json({ data: created });
+        res.status(201).json(created);
     } catch (err) {
         next(err);
     }

@@ -1,15 +1,10 @@
 import db from './db-pool.js';
-import { getOffset, emptyOrRows } from '../utils/helper.js';
-import config from '../config/config.js';
+import { emptyOrRows } from '../utils/helper.js';
 import { v4 as uuidv4 } from 'uuid';
 
-async function getMultiple(page = 1) {
-    const offset = getOffset(page, config.listPerPage);
-    const rows = await db.query(`SELECT id, name FROM Shelves LIMIT ${offset}, ${config.listPerPage}`);
-    const data = emptyOrRows(rows);
-    const meta = { page };
-
-    return { data, meta };
+async function getMultiple() {
+    const rows = await db.query(`SELECT id, name FROM Shelves`);
+    return emptyOrRows(rows);
 }
 
 async function getById(id) {

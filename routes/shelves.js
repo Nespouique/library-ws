@@ -93,14 +93,7 @@ router.get('/:id', async function (req, res, next) {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *                 description: Name of the shelf
- *                 example: "Étagère Littérature Française"
+ *             $ref: '#/components/schemas/ShelfInput'
  *     responses:
  *       201:
  *         description: Shelf created successfully
@@ -157,14 +150,7 @@ router.post('/', async function (req, res, next) {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *                 description: New name for the shelf
- *                 example: "Étagère Science-Fiction"
+ *             $ref: '#/components/schemas/ShelfInput'
  *     responses:
  *       200:
  *         description: Shelf updated successfully
@@ -226,12 +212,7 @@ router.put('/:id', async function (req, res, next) {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 description: New name for the shelf (optional)
- *                 example: "Étagère Mystère"
+ *             $ref: '#/components/schemas/ShelfPartialInput'
  *     responses:
  *       200:
  *         description: Shelf updated successfully

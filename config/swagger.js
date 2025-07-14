@@ -217,6 +217,39 @@ const options = {
                         },
                     },
                 },
+                ShelfInput: {
+                    type: 'object',
+                    required: ['name'],
+                    properties: {
+                        name: {
+                            type: 'string',
+                            description: 'The name of the shelf',
+                            example: 'Étagère Littérature Française',
+                        },
+                        location: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'The physical location of the shelf (optional)',
+                            example: 'Kube1',
+                        },
+                    },
+                },
+                ShelfPartialInput: {
+                    type: 'object',
+                    properties: {
+                        name: {
+                            type: 'string',
+                            description: 'The name of the shelf (optional)',
+                            example: 'Étagère Littérature Française',
+                        },
+                        location: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'The physical location of the shelf (optional)',
+                            example: 'Kube1',
+                        },
+                    },
+                },
                 Shelf: {
                     type: 'object',
                     required: ['id', 'name'],
@@ -231,6 +264,12 @@ const options = {
                             type: 'string',
                             description: 'The name of the shelf',
                             example: 'Étagère Littérature Française',
+                        },
+                        location: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'The physical location of the shelf (optional)',
+                            example: 'Kube1',
                         },
                     },
                 },

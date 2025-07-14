@@ -22,6 +22,9 @@ const JACKETS_DIR = path.join(UPLOADS_DIR, 'jackets');
  */
 async function processJacketImage(imageBuffer, filename) {
     try {
+        // S'assurer que tous les dossiers existent
+        await ensureDirectoriesExist();
+
         // Sauvegarder l'original
         const originalPath = path.join(JACKETS_DIR, 'original', `${filename}.jpg`);
         await sharp(imageBuffer).jpeg({ quality: 100 }).toFile(originalPath);
@@ -165,4 +168,28 @@ function generateJacketFilename(bookId) {
     return `jacket_${bookId}_${Date.now()}`;
 }
 
-export { processJacketImage, getJacketImage, deleteJacketImage, validateImageFile, generateJacketFilename, JACKET_SIZES };
+/**
+ * S'assure que tous les dossiers nécessaires existent
+ */
+async function ensureDirectoriesExist() {
+    try {
+        // Créer le dossier uploads s'il n'existe pas
+        await fs.mkdir(UPLOADS_DIR, { recursive: true });
+
+        // Créer le dossier jackets s'il n'existe pas
+        await fs.mkdir(JACKETS_DIR, { recursive: true });
+
+        // Créer le dossier original
+        await fs.mkdir(path.join(JACKETS_DIR, 'original'), { recursive: true });
+
+        // Créer tous les dossiers de tailles
+        for (const sizeName of Object.keys(JACKET_SIZES)) {
+            await fs.mkdir(path.join(JACKETS_DIR, sizeName), { recursive: true });
+        }
+    } catch (error) {
+        console.error('Erreur lors de la création des dossiers:', error);
+        throw error;
+    }
+}
+
+export { processJacketImage, getJacketImage, deleteJacketImage, validateImageFile, generateJacketFilename, JACKET_SIZES, ensureDirectoriesExist };

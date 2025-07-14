@@ -33,6 +33,7 @@ Table des étagères pour organiser les livres.
 CREATE TABLE Shelves (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -41,6 +42,7 @@ CREATE TABLE Shelves (
 
 - Clé primaire : `id` (UUID)
 - Pas de contrainte d'unicité sur le nom (plusieurs étagères peuvent avoir le même nom)
+- Le champ `location` est optionnel et permet de faire le lien avec un emplacement physique
 
 ### 📖 Books
 
@@ -102,9 +104,9 @@ L'application insère automatiquement des données d'exemple si les tables sont 
 
 ### Étagères d'exemple
 
-- Étagère 1
-- Étagère 2
-- Étagère 3
+- Étagère 1 (Kube1)
+- Étagère 2 (Kube2)
+- Étagère 3 (Kube3)
 
 ### Livres d'exemple
 

@@ -20,6 +20,7 @@ const CREATE_SHELVES_TABLE = `
 CREATE TABLE IF NOT EXISTS Shelves (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`;
 
@@ -48,9 +49,9 @@ const SAMPLE_AUTHORS = [
 ];
 
 const SAMPLE_SHELVES = [
-    ['d4e5f6g7-h8i9-0123-def0-234567890123', 'Étagère 1'],
-    ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Étagère 2'],
-    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Étagère 3'],
+    ['d4e5f6g7-h8i9-0123-def0-234567890123', 'Étagère 1', 'Kube1'],
+    ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Étagère 2', 'Kube2'],
+    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Étagère 3', 'Kube3'],
 ];
 
 const SAMPLE_BOOKS = [
@@ -124,7 +125,7 @@ async function insertSampleData(connection) {
         if (shelfCount[0].count === 0) {
             // Insérer les étagères d'exemple
             for (const shelf of SAMPLE_SHELVES) {
-                await connection.execute('INSERT IGNORE INTO Shelves (id, name) VALUES (?, ?)', shelf);
+                await connection.execute('INSERT IGNORE INTO Shelves (id, name, location) VALUES (?, ?, ?)', shelf);
             }
             console.log("✅ Étagères d'exemple insérées");
         }

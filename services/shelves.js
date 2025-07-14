@@ -3,18 +3,18 @@ import { emptyOrRows } from '../utils/helper.js';
 import { v4 as uuidv4 } from 'uuid';
 
 async function getMultiple() {
-    const rows = await db.query(`SELECT id, name FROM Shelves`);
+    const rows = await db.query(`SELECT id, name, location FROM Shelves`);
     return emptyOrRows(rows);
 }
 
 async function getById(id) {
-    const rows = await db.query('SELECT id, name FROM Shelves WHERE id = ?', [id]);
+    const rows = await db.query('SELECT id, name, location FROM Shelves WHERE id = ?', [id]);
 
     return rows[0] || null;
 }
 
 async function getByName(name) {
-    const rows = await db.query('SELECT id, name FROM Shelves WHERE name = ?', [name.trim()]);
+    const rows = await db.query('SELECT id, name, location FROM Shelves WHERE name = ?', [name.trim()]);
     return rows[0] || null;
 }
 
@@ -35,9 +35,9 @@ async function create(shelf) {
     }
 
     const shelfId = uuidv4();
-    await db.query('INSERT INTO Shelves (id, name) VALUES (?, ?)', [shelfId, shelf.name.trim()]);
+    await db.query('INSERT INTO Shelves (id, name, location) VALUES (?, ?, ?)', [shelfId, shelf.name.trim(), shelf.location || null]);
 
-    return { id: shelfId, name: shelf.name.trim() };
+    return { id: shelfId, name: shelf.name.trim(), location: shelf.location || null };
 }
 
 async function update(id, shelf) {
@@ -56,7 +56,7 @@ async function update(id, shelf) {
         throw error;
     }
 
-    const result = await db.query('UPDATE Shelves SET name = ? WHERE id = ?', [shelf.name.trim(), id]);
+    const result = await db.query('UPDATE Shelves SET name = ?, location = ? WHERE id = ?', [shelf.name.trim(), shelf.location || null, id]);
 
     return result.affectedRows > 0;
 }
@@ -66,6 +66,10 @@ async function updatePartial(id, updates) {
     if (!current) {
         return false;
     }
+
+    // Build the update query dynamically
+    const updateFields = [];
+    const updateValues = [];
 
     // Only update if name is provided
     if (updates.name !== undefined) {
@@ -83,12 +87,24 @@ async function updatePartial(id, updates) {
             throw error;
         }
 
-        const result = await db.query('UPDATE Shelves SET name = ? WHERE id = ?', [updates.name.trim(), id]);
-        return result.affectedRows > 0;
+        updateFields.push('name = ?');
+        updateValues.push(updates.name.trim());
+    }
+
+    // Handle location updates (can be null)
+    if (updates.location !== undefined) {
+        updateFields.push('location = ?');
+        updateValues.push(updates.location || null);
     }
 
     // If no valid updates, return true (no-op)
-    return true;
+    if (updateFields.length === 0) {
+        return true;
+    }
+
+    updateValues.push(id);
+    const result = await db.query(`UPDATE Shelves SET ${updateFields.join(', ')} WHERE id = ?`, updateValues);
+    return result.affectedRows > 0;
 }
 
 async function remove(id) {

@@ -1,6 +1,7 @@
 import db from './db-pool.js';
 import { emptyOrRows } from '../utils/helper.js';
 import { v4 as uuidv4 } from 'uuid';
+import { deleteJacketImage } from './images.js';
 
 async function getMultiple() {
     const rows = await db.query(`SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books`);
@@ -173,12 +174,58 @@ async function updatePartial(id, updates) {
 }
 
 async function remove(id) {
+    // Récupérer le livre avant suppression pour connaître son jacket
+    const book = await getById(id);
+    if (!book) {
+        return false;
+    }
+
+    // Supprimer les fichiers de jacket si ils existent
+    if (book.jacket) {
+        try {
+            await deleteJacketImage(book.jacket);
+            console.log(`Fichiers de jacket supprimés pour le livre ${id}: ${book.jacket}`);
+        } catch (error) {
+            // Log l'erreur mais ne pas faire échouer la suppression du livre
+            console.warn(`Erreur lors de la suppression des fichiers de jacket pour le livre ${id}:`, error.message);
+        }
+    }
+
+    // Supprimer l'enregistrement en base
     const result = await db.query('DELETE FROM Books WHERE id = ?', [id]);
 
     return result.affectedRows > 0;
 }
 
 async function updateJacket(id, jacketFilename) {
+    // Récupérer l'ancien jacket avant mise à jour
+    const book = await getById(id);
+    if (!book) {
+        return false;
+    }
+
+    // Supprimer l'ancien jacket si il existe et qu'on le remplace par un nouveau
+    if (book.jacket && jacketFilename && book.jacket !== jacketFilename) {
+        try {
+            await deleteJacketImage(book.jacket);
+            console.log(`Ancien fichier de jacket supprimé pour le livre ${id}: ${book.jacket}`);
+        } catch (error) {
+            // Log l'erreur mais ne pas faire échouer la mise à jour
+            console.warn(`Erreur lors de la suppression de l'ancien jacket pour le livre ${id}:`, error.message);
+        }
+    }
+
+    // Si on supprime le jacket (jacketFilename = null), supprimer aussi les fichiers
+    if (book.jacket && jacketFilename === null) {
+        try {
+            await deleteJacketImage(book.jacket);
+            console.log(`Fichiers de jacket supprimés pour le livre ${id}: ${book.jacket}`);
+        } catch (error) {
+            console.warn(`Erreur lors de la suppression des fichiers de jacket pour le livre ${id}:`, error.message);
+        }
+    }
+
+    // Mettre à jour en base
     const result = await db.query('UPDATE Books SET jacket = ? WHERE id = ?', [jacketFilename, id]);
     return result.affectedRows > 0;
 }

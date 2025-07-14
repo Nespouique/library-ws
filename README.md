@@ -226,6 +226,29 @@ uploads/jackets/
 └── large/          # 500x750 WebP
 ```
 
+## 🗑️ Suppression automatique des jackets
+
+L'API gère automatiquement la suppression des fichiers de jacket dans les cas suivants :
+
+### Suppression d'un livre
+
+Quand un livre est supprimé (`DELETE /books/{id}`), tous les fichiers de jacket associés sont automatiquement supprimés :
+
+- Fichier original (`.jpg`)
+- Toutes les tailles redimensionnées (`.webp`)
+
+### Remplacement d'une jacket
+
+Quand une jacket est remplacée (`POST /books/{id}/jacket`), l'ancienne jacket est automatiquement supprimée avant d'uploader la nouvelle.
+
+### Suppression manuelle d'une jacket
+
+Quand une jacket est supprimée (`DELETE /books/{id}/jacket`), tous les fichiers associés sont supprimés.
+
+### Gestion des erreurs
+
+Si la suppression des fichiers échoue, l'opération en base de données continue (pour éviter les incohérences) mais une erreur est loggée dans la console.
+
 ---
 
 **Author** : Developed with ❤️ for library management  

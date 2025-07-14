@@ -45,9 +45,9 @@ const mockBooks = [
 ];
 
 const mockShelves = [
-    { id: 'd4e5f6g7-h8i9-0123-def0-234567890123', name: 'Étagère 1' },
-    { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234', name: 'Étagère 2' },
-    { id: 'f6g7h8i9-j0k1-2345-f012-456789012345', name: 'Étagère 3' },
+    { id: 'd4e5f6g7-h8i9-0123-def0-234567890123', name: 'Étagère 1', location: 'Salon - Mur Nord' },
+    { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234', name: 'Étagère 2', location: 'Bureau - Étagère droite' },
+    { id: 'f6g7h8i9-j0k1-2345-f012-456789012345', name: 'Étagère 3', location: null },
 ];
 
 // Generate UUID-like string for testing
@@ -339,7 +339,7 @@ const shelvesService = {
         }
 
         const newId = generateTestUuid();
-        const newShelf = { id: newId, name: shelf.name.trim() };
+        const newShelf = { id: newId, name: shelf.name.trim(), location: shelf.location || null };
         mockShelves.push(newShelf);
         return newShelf;
     },
@@ -363,6 +363,7 @@ const shelvesService = {
         if (index === -1) return false;
 
         mockShelves[index].name = shelf.name.trim();
+        mockShelves[index].location = shelf.location || null;
         return true;
     },
 
@@ -386,6 +387,10 @@ const shelvesService = {
             }
 
             mockShelves[index].name = updates.name.trim();
+        }
+
+        if (updates.location !== undefined) {
+            mockShelves[index].location = updates.location || null;
         }
         return true;
     },
@@ -479,6 +484,7 @@ describe('Authors Service - Unit Tests with Mock Data (UUID)', () => {
             await expect(authorsService.create(existingAuthor)).rejects.toThrow('Author already exists');
         });
     });
+
     describe('update', () => {
         test('should update author successfully', async () => {
             const updateData = { firstName: 'Johnny', lastName: 'Doe' };
@@ -1111,7 +1117,11 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
     beforeEach(() => {
         // Reset mock data before each test
         mockShelves.length = 0;
-        mockShelves.push({ id: 'd4e5f6g7-h8i9-0123-def0-234567890123', name: 'Étagère 1' }, { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234', name: 'Étagère 2' }, { id: 'f6g7h8i9-j0k1-2345-f012-456789012345', name: 'Étagère 3' });
+        mockShelves.push(
+            { id: 'd4e5f6g7-h8i9-0123-def0-234567890123', name: 'Étagère 1', location: 'Salon - Mur Nord' },
+            { id: 'e5f6g7h8-i9j0-1234-ef01-345678901234', name: 'Étagère 2', location: 'Bureau - Étagère droite' },
+            { id: 'f6g7h8i9-j0k1-2345-f012-456789012345', name: 'Étagère 3', location: null }
+        );
 
         // Also reset books data to ensure clean state for shelf tests
         mockBooks.length = 0;
@@ -1162,6 +1172,7 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
             expect(result).toEqual({
                 id: 'd4e5f6g7-h8i9-0123-def0-234567890123',
                 name: 'Étagère 1',
+                location: 'Salon - Mur Nord',
             });
         });
 
@@ -1178,6 +1189,26 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
             const result = await shelvesService.create(newShelf);
 
             expect(result.name).toBe('Nouvelle Étagère');
+            expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+            expect(mockShelves).toHaveLength(4);
+        });
+
+        test('should create new shelf with location', async () => {
+            const newShelf = { name: 'Nouvelle Étagère', location: 'Cuisine - Étagère haute' };
+            const result = await shelvesService.create(newShelf);
+
+            expect(result.name).toBe('Nouvelle Étagère');
+            expect(result.location).toBe('Cuisine - Étagère haute');
+            expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+            expect(mockShelves).toHaveLength(4);
+        });
+
+        test('should create new shelf without location (null)', async () => {
+            const newShelf = { name: 'Étagère sans lieu' };
+            const result = await shelvesService.create(newShelf);
+
+            expect(result.name).toBe('Étagère sans lieu');
+            expect(result.location).toBeNull();
             expect(result.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
             expect(mockShelves).toHaveLength(4);
         });
@@ -1223,6 +1254,24 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result).toBe(true);
             expect(mockShelves[0].name).toBe('Étagère Mise à Jour');
+        });
+
+        test('should update shelf name and location successfully', async () => {
+            const updateData = { name: 'Étagère Mise à Jour', location: 'Nouvelle location' };
+            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère Mise à Jour');
+            expect(mockShelves[0].location).toBe('Nouvelle location');
+        });
+
+        test('should update shelf with null location', async () => {
+            const updateData = { name: 'Étagère Sans Lieu', location: null };
+            const result = await shelvesService.update('d4e5f6g7-h8i9-0123-def0-234567890123', updateData);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère Sans Lieu');
+            expect(mockShelves[0].location).toBeNull();
         });
 
         test('should return false when shelf not found', async () => {
@@ -1272,6 +1321,36 @@ describe('Shelves Service - Unit Tests with Mock Data (UUID)', () => {
 
             expect(result).toBe(true);
             expect(mockShelves[0].name).toBe('Étagère Partiellement Mise à Jour');
+        });
+
+        test('should update only location when provided', async () => {
+            const updates = { location: 'Nouvelle location partielle' };
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
+            expect(mockShelves[0].location).toBe('Nouvelle location partielle');
+        });
+
+        test('should update both name and location in partial update', async () => {
+            const updates = { name: 'Nouveau nom', location: 'Nouvelle location' };
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Nouveau nom');
+            expect(mockShelves[0].location).toBe('Nouvelle location');
+        });
+
+        test('should set location to null in partial update', async () => {
+            const updates = { location: null };
+
+            const result = await shelvesService.updatePartial('d4e5f6g7-h8i9-0123-def0-234567890123', updates);
+
+            expect(result).toBe(true);
+            expect(mockShelves[0].name).toBe('Étagère 1'); // Should remain unchanged
+            expect(mockShelves[0].location).toBeNull();
         });
 
         test('should be successful with no updates (no-op)', async () => {

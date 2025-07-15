@@ -4,6 +4,7 @@ import books from './routes/books.js';
 import authors from './routes/authors.js';
 import shelves from './routes/shelves.js';
 import jackets from './routes/jackets.js';
+import kubes from './routes/kubes.js';
 import dotenv from 'dotenv';
 import { specs, swaggerUi } from './config/swagger.js';
 import dbInit from './services/db-init.js';
@@ -87,6 +88,7 @@ app.use('/books', books);
 app.use('/books', jackets);
 app.use('/authors', authors);
 app.use('/shelves', shelves);
+app.use('/kubes', kubes);
 
 /* Error handler middleware */
 app.use((err, req, res, _next) => {

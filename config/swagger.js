@@ -298,6 +298,10 @@ const options = {
                 name: 'Shelves',
                 description: 'Operations about library shelves',
             },
+            {
+                name: 'Kubes',
+                description: 'Operations about kubes SVG file management',
+            },
         ],
     },
     apis: ['./routes/*.js', './index.js'], // Path to the API files

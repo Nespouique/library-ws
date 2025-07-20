@@ -49,9 +49,9 @@ const SAMPLE_AUTHORS = [
 ];
 
 const SAMPLE_SHELVES = [
-    ['d4e5f6g7-h8i9-0123-def0-234567890123', 'Étagère 1', 'Kube1'],
-    ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Étagère 2', 'Kube2'],
-    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Étagère 3', 'Kube3'],
+    ['d4e5f6g7-h8i9-0123-def0-234567890123', 'Étagère 1', 'kube1'],
+    ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Étagère 2', 'kube2'],
+    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Étagère 3', 'kube3'],
 ];
 
 const SAMPLE_BOOKS = [

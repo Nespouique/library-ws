@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS Books (
     id VARCHAR(36) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(36) NOT NULL,
-    isbn VARCHAR(13) NOT NULL UNIQUE,
+    isbn VARCHAR(13) NULL UNIQUE,
     date DATE,
     description TEXT,
     jacket VARCHAR(255),
@@ -77,8 +77,32 @@ async function tableExists(connection, tableName) {
 }
 
 /**
- * Crée les tables de la base de données si elles n'existent pas
+ * Applique les migrations de schéma sur les tables existantes
  */
+async function migrateSchema(connection) {
+    try {
+        console.log('🔄 Vérification des migrations de schéma...');
+
+        // Migration : isbn Books NOT NULL -> NULL (pour permettre les livres sans ISBN)
+        const [isbnColumn] = await connection.execute(
+            `SELECT IS_NULLABLE FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Books' AND COLUMN_NAME = 'isbn'`,
+            [config.db.database]
+        );
+
+        if (isbnColumn.length > 0 && isbnColumn[0].IS_NULLABLE === 'NO') {
+            console.log('📦 Migration : passage de Books.isbn NOT NULL → NULL...');
+            await connection.execute('ALTER TABLE Books MODIFY COLUMN isbn VARCHAR(13) NULL');
+            console.log('✅ Migration Books.isbn appliquée');
+        } else {
+            console.log('✅ Schéma Books.isbn déjà à jour');
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors des migrations de schéma:', error);
+        throw error;
+    }
+}
+
 async function createTables(connection) {
     try {
         console.log('📋 Création des tables...');
@@ -177,6 +201,7 @@ async function initializeDatabase() {
             console.log('✅ Base de données initialisée avec succès!');
         } else {
             console.log("✅ Toutes les tables existent déjà, pas d'initialisation nécessaire");
+            await migrateSchema(connection);
         }
 
         return true;

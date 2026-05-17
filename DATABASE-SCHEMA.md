@@ -53,7 +53,7 @@ CREATE TABLE Books (
     id VARCHAR(36) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(36) NOT NULL,
-    isbn VARCHAR(13) NOT NULL UNIQUE,
+    isbn VARCHAR(13) NULL UNIQUE,
     date DATE,
     description TEXT,
     jacket VARCHAR(255),
@@ -69,7 +69,7 @@ CREATE TABLE Books (
 **Contraintes :**
 
 - Clé primaire : `id` (UUID)
-- Contrainte d'unicité : `isbn` - Chaque livre a un ISBN unique
+- Contrainte d'unicité : `isbn` - Chaque livre a un ISBN unique (NULL autorisé pour les livres sans ISBN)
 - Clé étrangère : `author` → `Authors(id)`
 - Clé étrangère : `shelf` → `Shelves(id)` (optionnelle)
 

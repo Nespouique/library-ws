@@ -177,15 +177,21 @@ const booksService = {
             throw error;
         }
 
-        // Check for duplicate ISBN
-        const existing = mockBooks.find(b => b.isbn === book.isbn);
-        if (existing) {
-            const error = new Error('Book/ISBN already exists');
-            error.statusCode = 409;
-            throw error;
+        // Normalise l'ISBN : chaîne vide → null
+        const isbn = book.isbn || null;
+
+        // Check for duplicate ISBN (only if isbn is provided)
+        if (isbn) {
+            const existing = mockBooks.find(b => b.isbn === isbn);
+            if (existing) {
+                const error = new Error('Book/ISBN already exists');
+                error.statusCode = 409;
+                throw error;
+            }
         }
+
         const newId = generateTestUuid();
-        const createdBook = { id: newId, ...book, author: authorId };
+        const createdBook = { id: newId, ...book, author: authorId, isbn };
         mockBooks.push(createdBook);
 
         return createdBook;
@@ -195,9 +201,9 @@ const booksService = {
         // Extract author ID whether it's a string or an object with id property
         const authorId = typeof book.author === 'string' ? book.author : book.author?.id;
 
-        // Validation PUT : tous les champs requis doivent être fournis
-        if (!book.title || !authorId || !book.isbn) {
-            const error = new Error('PUT requires complete object: title, author, and isbn are required');
+        // Validation PUT : title et author requis, isbn optionnel
+        if (!book.title || !authorId) {
+            const error = new Error('PUT requires complete object: title and author are required');
             error.statusCode = 400;
             throw error;
         }
@@ -210,12 +216,17 @@ const booksService = {
             throw error;
         }
 
-        // Check for duplicate ISBN
-        const duplicate = mockBooks.find(b => b.id !== id && b.isbn === book.isbn);
-        if (duplicate) {
-            const error = new Error('Book/ISBN already exists');
-            error.statusCode = 409;
-            throw error;
+        // Normalise l'ISBN : chaîne vide → null
+        const isbn = book.isbn || null;
+
+        // Check for duplicate ISBN (only if isbn is provided)
+        if (isbn) {
+            const duplicate = mockBooks.find(b => b.id !== id && b.isbn === isbn);
+            if (duplicate) {
+                const error = new Error('Book/ISBN already exists');
+                error.statusCode = 409;
+                throw error;
+            }
         }
 
         const index = mockBooks.findIndex(b => b.id === id);
@@ -230,7 +241,7 @@ const booksService = {
 
         // Filter out jacket field - it should not be updated via regular update
         const { jacket, ...updateData } = book;
-        mockBooks[index] = { ...mockBooks[index], ...updateData, author: authorId };
+        mockBooks[index] = { ...mockBooks[index], ...updateData, author: authorId, isbn };
         return true;
     },
 
@@ -263,12 +274,17 @@ const booksService = {
 
         // Check for duplicate ISBN if provided
         if (updates.isbn !== undefined) {
-            const duplicate = mockBooks.find(b => b.id !== id && b.isbn === updates.isbn);
-            if (duplicate) {
-                const error = new Error('Book/ISBN already exists');
-                error.statusCode = 409;
-                throw error;
+            // Normalise l'ISBN : chaîne vide → null
+            const newIsbn = updates.isbn || null;
+            if (newIsbn) {
+                const duplicate = mockBooks.find(b => b.id !== id && b.isbn === newIsbn);
+                if (duplicate) {
+                    const error = new Error('Book/ISBN already exists');
+                    error.statusCode = 409;
+                    throw error;
+                }
             }
+            updates.isbn = newIsbn;
         }
 
         // Apply partial updates (excluding jacket field)
@@ -782,6 +798,40 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
 
             await expect(booksService.create(newBook)).rejects.toThrow('Book/ISBN already exists');
         });
+
+        test('should create book without isbn (empty string)', async () => {
+            const newBook = {
+                title: 'Book Without ISBN',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                isbn: '',
+            };
+
+            const result = await booksService.create(newBook);
+
+            expect(result.title).toBe('Book Without ISBN');
+            expect(result.isbn).toBeNull();
+            expect(mockBooks).toHaveLength(3);
+        });
+
+        test('should create multiple books without isbn (no conflict)', async () => {
+            const book1 = {
+                title: 'Book Without ISBN 1',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                isbn: '',
+            };
+            const book2 = {
+                title: 'Book Without ISBN 2',
+                author: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+                isbn: '',
+            };
+
+            await booksService.create(book1);
+            const result = await booksService.create(book2);
+
+            expect(result.title).toBe('Book Without ISBN 2');
+            expect(result.isbn).toBeNull();
+            expect(mockBooks).toHaveLength(4);
+        });
     });
 
     describe('update', () => {
@@ -843,7 +893,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 isbn: '9999999999999',
             };
 
-            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, author, and isbn are required');
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title and author are required');
         });
 
         test('should return false when book not found', async () => {
@@ -868,7 +918,7 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 isbn: '9999999999999',
             };
 
-            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title, author, and isbn are required');
+            await expect(booksService.update('e5f6g7h8-i9j0-1234-ef01-345678901234', updateData)).rejects.toThrow('PUT requires complete object: title and author are required');
         });
 
         test('should throw error when author does not exist', async () => {

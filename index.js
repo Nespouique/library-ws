@@ -8,6 +8,7 @@ import kubes from './routes/kubes.js';
 import dotenv from 'dotenv';
 import { specs, swaggerUi } from './config/swagger.js';
 import dbInit from './services/db-init.js';
+import { createOidcAuthMiddleware } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
+    preflightContinue: process.env.AUTH_ENABLED === 'true',
     optionsSuccessStatus: 200, // Support pour anciens navigateurs
 };
 
@@ -68,6 +70,10 @@ app.get('/', (req, res) => {
     res.json({ message: 'ok' });
 });
 
+app.get('/health', (req, res) => {
+    res.json({ message: 'ok' });
+});
+
 // Swagger JSON endpoint for external tools (Postman, etc.)
 app.get('/api-docs/swagger.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
@@ -83,6 +89,16 @@ app.use(
         customSiteTitle: 'Library API Documentation',
     })
 );
+
+app.use(createOidcAuthMiddleware());
+
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+
+    return next();
+});
 
 app.use('/books', books);
 app.use('/books', jackets);

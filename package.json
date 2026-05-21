@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "start": "node index.js",
+        "start:gateway": "node gateway/index.js",
         "db:init": "node scripts/db-management.js init",
         "db:check": "node scripts/db-management.js check",
         "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json --detectOpenHandles --forceExit",
@@ -21,6 +22,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.5.0",
         "express": "^5.1.0",
+        "jose": "^6.2.3",
         "multer": "^2.0.1",
         "mysql2": "^3.14.1",
         "sharp": "^0.34.2",

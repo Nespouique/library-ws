@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { timingSafeEqual } from 'node:crypto';
 
 const DEFAULT_READ_SCOPE = 'library:read';
 const DEFAULT_WRITE_SCOPE = 'library:write';
@@ -6,6 +7,25 @@ const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 function isAuthEnabled(env) {
     return env.AUTH_ENABLED === 'true';
+}
+
+function getAuthMode(env) {
+    return env.AUTH_MODE || 'oidc';
+}
+
+function safeEqual(actual, expected) {
+    if (!actual || !expected) {
+        return false;
+    }
+
+    const actualBuffer = Buffer.from(actual);
+    const expectedBuffer = Buffer.from(expected);
+
+    if (actualBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+
+    return timingSafeEqual(actualBuffer, expectedBuffer);
 }
 
 function getRequiredScope(method, env) {
@@ -51,6 +71,25 @@ function createJsonResponse(res, statusCode, message) {
     return res.status(statusCode).json({ message });
 }
 
+function validateStaticCredentials(req, env) {
+    if (!env.API_CLIENT_ID || !env.API_CLIENT_SECRET) {
+        return { statusCode: 500, message: 'Authentication is not configured' };
+    }
+
+    const clientId = req.headers?.['x-client-id'];
+    const clientSecret = req.headers?.['x-client-secret'];
+
+    if (!clientId || !clientSecret) {
+        return { statusCode: 401, message: 'Authentication required' };
+    }
+
+    if (!safeEqual(clientId, env.API_CLIENT_ID) || !safeEqual(clientSecret, env.API_CLIENT_SECRET)) {
+        return { statusCode: 401, message: 'Invalid credentials' };
+    }
+
+    return null;
+}
+
 function createJwks(env, jwksFactory) {
     if (!env.OIDC_JWKS_URI) {
         return null;
@@ -64,6 +103,20 @@ export function createOidcAuthMiddleware({ env = process.env, jwtVerifier = jwtV
 
     return async function oidcAuthMiddleware(req, res, next) {
         if (!isAuthEnabled(env)) {
+            return next();
+        }
+
+        if (getAuthMode(env) === 'static') {
+            const error = validateStaticCredentials(req, env);
+            if (error) {
+                return createJsonResponse(res, error.statusCode, error.message);
+            }
+
+            req.auth = {
+                clientId: req.headers['x-client-id'],
+                mode: 'static',
+            };
+
             return next();
         }
 

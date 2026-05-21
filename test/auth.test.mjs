@@ -16,10 +16,10 @@ function createResponse() {
     };
 }
 
-function createRequest({ method = 'GET', authorization } = {}) {
+function createRequest({ method = 'GET', authorization, headers = {} } = {}) {
     return {
         method,
-        headers: authorization ? { authorization } : {},
+        headers: authorization ? { ...headers, authorization } : headers,
     };
 }
 
@@ -56,6 +56,48 @@ describe('OIDC auth middleware', () => {
 
         expect(res.status).toHaveBeenCalledWith(401);
         expect(res.body).toEqual({ message: 'Authentication required' });
+        expect(next).not.toHaveBeenCalled();
+        expect(jwtVerifier).not.toHaveBeenCalled();
+    });
+
+    test('allows requests with valid static credentials', async () => {
+        const req = createRequest({
+            headers: {
+                'x-client-id': 'library-gateway',
+                'x-client-secret': 'server-secret',
+            },
+        });
+        const { next, jwtVerifier } = await runMiddleware({
+            req,
+            env: createEnv({
+                AUTH_MODE: 'static',
+                API_CLIENT_ID: 'library-gateway',
+                API_CLIENT_SECRET: 'server-secret',
+            }),
+        });
+
+        expect(next).toHaveBeenCalledTimes(1);
+        expect(jwtVerifier).not.toHaveBeenCalled();
+        expect(req.auth).toEqual({ clientId: 'library-gateway', mode: 'static' });
+    });
+
+    test('returns 401 when static credentials are invalid', async () => {
+        const { res, next, jwtVerifier } = await runMiddleware({
+            req: createRequest({
+                headers: {
+                    'x-client-id': 'library-gateway',
+                    'x-client-secret': 'wrong-secret',
+                },
+            }),
+            env: createEnv({
+                AUTH_MODE: 'static',
+                API_CLIENT_ID: 'library-gateway',
+                API_CLIENT_SECRET: 'server-secret',
+            }),
+        });
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.body).toEqual({ message: 'Invalid credentials' });
         expect(next).not.toHaveBeenCalled();
         expect(jwtVerifier).not.toHaveBeenCalled();
     });

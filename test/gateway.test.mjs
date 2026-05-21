@@ -1,5 +1,5 @@
 import { describe, test, expect, jest } from '@jest/globals';
-import { createTokenProvider } from '../gateway/index.js';
+import { createTokenProvider, getTargetAuthHeaders, validateGatewayCredentials } from '../gateway/index.js';
 
 function createTokenResponse({ token = 'access-token', expiresIn = 120 } = {}) {
     return {
@@ -66,5 +66,65 @@ describe('API gateway token provider', () => {
         await expect(getAccessToken()).resolves.toBe('second-token');
 
         expect(fetchImpl).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe('API gateway static authentication', () => {
+    test('validates incoming static client credentials', () => {
+        const req = {
+            get: jest.fn(name => {
+                const headers = {
+                    'x-client-id': 'library-front',
+                    'x-client-secret': 'front-secret',
+                };
+
+                return headers[name];
+            }),
+        };
+
+        const error = validateGatewayCredentials(req, {
+            GATEWAY_AUTH_MODE: 'static',
+            GATEWAY_CLIENT_ID: 'library-front',
+            GATEWAY_CLIENT_SECRET: 'front-secret',
+        });
+
+        expect(error).toBeNull();
+    });
+
+    test('rejects invalid incoming static client credentials', () => {
+        const req = {
+            get: jest.fn(name => {
+                const headers = {
+                    'x-client-id': 'library-front',
+                    'x-client-secret': 'wrong-secret',
+                };
+
+                return headers[name];
+            }),
+        };
+
+        const error = validateGatewayCredentials(req, {
+            GATEWAY_AUTH_MODE: 'static',
+            GATEWAY_CLIENT_ID: 'library-front',
+            GATEWAY_CLIENT_SECRET: 'front-secret',
+        });
+
+        expect(error).toEqual({ statusCode: 401, message: 'Invalid gateway credentials' });
+    });
+
+    test('builds static credentials for the target API', async () => {
+        await expect(
+            getTargetAuthHeaders(
+                {
+                    TARGET_API_AUTH_MODE: 'static',
+                    TARGET_API_CLIENT_ID: 'library-gateway',
+                    TARGET_API_CLIENT_SECRET: 'api-secret',
+                },
+                jest.fn()
+            )
+        ).resolves.toEqual({
+            'x-client-id': 'library-gateway',
+            'x-client-secret': 'api-secret',
+        });
     });
 });

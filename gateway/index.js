@@ -32,12 +32,56 @@ function getRequestId(req) {
     return randomUUID();
 }
 
-function getForwardHeaders(req, token, requestId) {
+function safeEqual(actual, expected) {
+    if (!actual || !expected) {
+        return false;
+    }
+
+    return actual === expected;
+}
+
+export function validateGatewayCredentials(req, env) {
+    if ((env.GATEWAY_AUTH_MODE || 'oidc') !== 'static') {
+        return null;
+    }
+
+    if (!env.GATEWAY_CLIENT_ID || !env.GATEWAY_CLIENT_SECRET) {
+        return { statusCode: 500, message: 'Gateway authentication is not configured' };
+    }
+
+    const clientId = req.get('x-client-id');
+    const clientSecret = req.get('x-client-secret');
+
+    if (!clientId || !clientSecret) {
+        return { statusCode: 401, message: 'Gateway authentication required' };
+    }
+
+    if (!safeEqual(clientId, env.GATEWAY_CLIENT_ID) || !safeEqual(clientSecret, env.GATEWAY_CLIENT_SECRET)) {
+        return { statusCode: 401, message: 'Invalid gateway credentials' };
+    }
+
+    return null;
+}
+
+export async function getTargetAuthHeaders(env, tokenProvider) {
+    if ((env.TARGET_API_AUTH_MODE || 'oidc') === 'static') {
+        return {
+            'x-client-id': getRequiredEnv(env, 'TARGET_API_CLIENT_ID'),
+            'x-client-secret': getRequiredEnv(env, 'TARGET_API_CLIENT_SECRET'),
+        };
+    }
+
+    return {
+        authorization: `Bearer ${await tokenProvider()}`,
+    };
+}
+
+function getForwardHeaders(req, authHeaders, requestId) {
     const headers = new Headers();
 
     for (const [name, value] of Object.entries(req.headers)) {
         const normalizedName = name.toLowerCase();
-        if (HOP_BY_HOP_HEADERS.has(normalizedName) || normalizedName === 'host' || normalizedName === 'authorization' || normalizedName === 'content-length') {
+        if (HOP_BY_HOP_HEADERS.has(normalizedName) || normalizedName === 'host' || normalizedName === 'authorization' || normalizedName === 'content-length' || normalizedName === 'x-client-id' || normalizedName === 'x-client-secret') {
             continue;
         }
 
@@ -48,7 +92,10 @@ function getForwardHeaders(req, token, requestId) {
         }
     }
 
-    headers.set('authorization', `Bearer ${token}`);
+    for (const [name, value] of Object.entries(authHeaders)) {
+        headers.set(name, value);
+    }
+
     headers.set('x-request-id', requestId);
 
     return headers;
@@ -149,11 +196,16 @@ export function createGatewayApp({ env = process.env, fetchImpl = fetch, tokenPr
         const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
         try {
-            const token = await tokenProvider();
+            const gatewayAuthError = validateGatewayCredentials(req, env);
+            if (gatewayAuthError) {
+                return res.status(gatewayAuthError.statusCode).json({ message: gatewayAuthError.message, requestId });
+            }
+
+            const authHeaders = await getTargetAuthHeaders(env, tokenProvider);
             const upstreamUrl = `${targetApiUrl}${req.originalUrl}`;
             const upstreamResponse = await fetchImpl(upstreamUrl, {
                 method: req.method,
-                headers: getForwardHeaders(req, token, requestId),
+                headers: getForwardHeaders(req, authHeaders, requestId),
                 body: isBodyAllowed(req.method) ? req.body : undefined,
                 signal: controller.signal,
             });

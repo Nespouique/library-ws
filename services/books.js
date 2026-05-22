@@ -4,13 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { deleteJacketImage } from './images.js';
 
 async function getMultiple() {
-    const rows = await db.query(`SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books`);
+    const rows = await db.query(`SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, lentTo, DATE_FORMAT(lentAt, "%Y-%m-%d") as lentAt, shelf FROM Books`);
 
     return emptyOrRows(rows);
 }
 
 async function getById(id) {
-    const rows = await db.query('SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, shelf FROM Books WHERE id = ?', [id]);
+    const rows = await db.query('SELECT id, title, DATE_FORMAT(date, "%Y-%m-%d") as date, author, description, isbn, jacket, lentTo, DATE_FORMAT(lentAt, "%Y-%m-%d") as lentAt, shelf FROM Books WHERE id = ?', [id]);
 
     if (!rows[0]) {
         return null;
@@ -51,7 +51,7 @@ async function create(book) {
     }
 
     const bookId = uuidv4();
-    await db.query('INSERT INTO Books (id, title, date, author, description, isbn, jacket, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [bookId, book.title, book.date, authorId, book.description, isbn, book.jacket, book.shelf || null]);
+    await db.query('INSERT INTO Books (id, title, date, author, description, isbn, jacket, lentTo, lentAt, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [bookId, book.title, book.date, authorId, book.description, isbn, book.jacket, book.lentTo || null, book.lentAt || null, book.shelf || null]);
 
     // Return the created book in the same format as getById
     return await getById(bookId);
@@ -97,7 +97,7 @@ async function update(id, book) {
     }
 
     // Ne met à jour que les champs autorisés (sans jacket)
-    const result = await db.query('UPDATE Books SET title=?, date=?, author=?, description=?, isbn=?, shelf=? WHERE id=?', [book.title, book.date, authorId, book.description, isbn, book.shelf || null, id]);
+    const result = await db.query('UPDATE Books SET title=?, date=?, author=?, description=?, isbn=?, shelf=?, lentTo=?, lentAt=? WHERE id=?', [book.title, book.date, authorId, book.description, isbn, book.shelf || null, book.lentTo || null, book.lentAt || null, id]);
 
     return result.affectedRows > 0;
 }
@@ -174,6 +174,16 @@ async function updatePartial(id, updates) {
     if (updates.shelf !== undefined) {
         fields.push('shelf = ?');
         values.push(updates.shelf);
+    }
+
+    if (updates.lentTo !== undefined) {
+        fields.push('lentTo = ?');
+        values.push(updates.lentTo);
+    }
+
+    if (updates.lentAt !== undefined) {
+        fields.push('lentAt = ?');
+        values.push(updates.lentAt);
     }
 
     // Si aucun champ à mettre à jour

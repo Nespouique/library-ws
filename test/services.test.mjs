@@ -30,6 +30,8 @@ const mockBooks = [
         date: '2024-01-01',
         description: 'Description 1',
         jacket: '/cover1.jpg',
+        lentTo: null,
+        lentAt: null,
         shelf: 'd4e5f6g7-h8i9-0123-def0-234567890123',
     },
     {
@@ -40,6 +42,8 @@ const mockBooks = [
         date: '2024-02-01',
         description: 'Description 2',
         jacket: '/cover2.jpg',
+        lentTo: null,
+        lentAt: null,
         shelf: null, // Book not on any shelf
     },
 ];
@@ -673,6 +677,8 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 date: '2024-01-01',
                 description: 'Description 1',
                 jacket: '/cover1.jpg',
+                lentTo: null,
+                lentAt: null,
                 shelf: 'd4e5f6g7-h8i9-0123-def0-234567890123',
             },
             {
@@ -683,6 +689,8 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
                 date: '2024-02-01',
                 description: 'Description 2',
                 jacket: '/cover2.jpg',
+                lentTo: null,
+                lentAt: null,
                 shelf: null,
             }
         );
@@ -1139,6 +1147,54 @@ describe('Books Service - Unit Tests with Mock Data (UUID)', () => {
             };
 
             await expect(booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', updates)).rejects.toThrow('Jacket field is read-only');
+        });
+    });
+
+    describe('lend / return', () => {
+        test('should lend a book via partial update', async () => {
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', {
+                lentTo: 'Jean Dupont',
+                lentAt: '2026-05-22',
+            });
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].lentTo).toBe('Jean Dupont');
+            expect(mockBooks[0].lentAt).toBe('2026-05-22');
+        });
+
+        test('should return a book by clearing lentTo and lentAt', async () => {
+            const result = await booksService.updatePartial('e5f6g7h8-i9j0-1234-ef01-345678901234', {
+                lentTo: null,
+                lentAt: null,
+            });
+
+            expect(result).toBe(true);
+            expect(mockBooks[0].lentTo).toBeNull();
+            expect(mockBooks[0].lentAt).toBeNull();
+        });
+
+        test('should lend a book via full update', async () => {
+            const book = mockBooks.find(b => b.id === 'f6g7h8i9-j0k1-2345-f012-456789012345');
+            const result = await booksService.update('f6g7h8i9-j0k1-2345-f012-456789012345', {
+                title: book.title,
+                date: book.date,
+                author: book.author,
+                description: book.description,
+                isbn: book.isbn,
+                lentTo: 'Marie Martin',
+                lentAt: '2026-05-20',
+            });
+
+            expect(result).toBe(true);
+            expect(mockBooks[1].lentTo).toBe('Marie Martin');
+            expect(mockBooks[1].lentAt).toBe('2026-05-20');
+        });
+
+        test('should return lentTo and lentAt in GET response', async () => {
+            const result = await booksService.getMultiple();
+
+            expect(result[0]).toHaveProperty('lentTo');
+            expect(result[0]).toHaveProperty('lentAt');
         });
     });
 });

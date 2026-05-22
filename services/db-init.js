@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS Books (
     date DATE,
     description TEXT,
     jacket VARCHAR(255),
+    lentTo VARCHAR(255),
+    lentAt DATE,
     shelf VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX author (author),
@@ -55,8 +57,8 @@ const SAMPLE_SHELVES = [
 ];
 
 const SAMPLE_BOOKS = [
-    ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Book 1', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '1234567890123', '2024-01-01', 'Description 1', '/cover1.jpg', 'd4e5f6g7-h8i9-0123-def0-234567890123'],
-    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Book 2', 'b2c3d4e5-f6g7-8901-bcde-f12345678901', '9876543210987', '2024-02-01', 'Description 2', '/cover2.jpg', null],
+    ['e5f6g7h8-i9j0-1234-ef01-345678901234', 'Book 1', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', '1234567890123', '2024-01-01', 'Description 1', '/cover1.jpg', null, null, 'd4e5f6g7-h8i9-0123-def0-234567890123'],
+    ['f6g7h8i9-j0k1-2345-f012-456789012345', 'Book 2', 'b2c3d4e5-f6g7-8901-bcde-f12345678901', '9876543210987', '2024-02-01', 'Description 2', '/cover2.jpg', null, null, null],
 ];
 
 /**
@@ -96,6 +98,36 @@ async function migrateSchema(connection) {
             console.log('✅ Migration Books.isbn appliquée');
         } else {
             console.log('✅ Schéma Books.isbn déjà à jour');
+        }
+
+        // Migration : ajout de Books.lentTo si absent
+        const [lentToColumn] = await connection.execute(
+            `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Books' AND COLUMN_NAME = 'lentTo'`,
+            [config.db.database]
+        );
+
+        if (lentToColumn.length === 0) {
+            console.log('📦 Migration : ajout de Books.lentTo...');
+            await connection.execute('ALTER TABLE Books ADD COLUMN lentTo VARCHAR(255)');
+            console.log('✅ Migration Books.lentTo appliquée');
+        } else {
+            console.log('✅ Colonne Books.lentTo déjà présente');
+        }
+
+        // Migration : ajout de Books.lentAt si absent
+        const [lentAtColumn] = await connection.execute(
+            `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'Books' AND COLUMN_NAME = 'lentAt'`,
+            [config.db.database]
+        );
+
+        if (lentAtColumn.length === 0) {
+            console.log('📦 Migration : ajout de Books.lentAt...');
+            await connection.execute('ALTER TABLE Books ADD COLUMN lentAt DATE');
+            console.log('✅ Migration Books.lentAt appliquée');
+        } else {
+            console.log('✅ Colonne Books.lentAt déjà présente');
         }
     } catch (error) {
         console.error('❌ Erreur lors des migrations de schéma:', error);
@@ -157,7 +189,7 @@ async function insertSampleData(connection) {
         if (bookCount[0].count === 0) {
             // Insérer les livres d'exemple
             for (const book of SAMPLE_BOOKS) {
-                await connection.execute('INSERT IGNORE INTO Books (id, title, author, isbn, date, description, jacket, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', book);
+                await connection.execute('INSERT IGNORE INTO Books (id, title, author, isbn, date, description, jacket, lentTo, lentAt, shelf) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', book);
             }
             console.log("✅ Livres d'exemple insérés");
         }

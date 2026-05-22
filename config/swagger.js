@@ -109,6 +109,19 @@ const options = {
                             description: 'Cover image URL',
                             example: '/covers/les-miserables.jpg',
                         },
+                        lentTo: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'Name of the person the book is lent to (null if available)',
+                            example: 'Jean Dupont',
+                        },
+                        lentAt: {
+                            type: 'string',
+                            format: 'date',
+                            nullable: true,
+                            description: 'Date the book was lent (null if available)',
+                            example: '2026-05-22',
+                        },
                         shelf: {
                             type: 'string',
                             format: 'uuid',
@@ -157,6 +170,19 @@ const options = {
                             type: 'string',
                             description: 'Cover image URL',
                             example: '/covers/les-miserables.jpg',
+                        },
+                        lentTo: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'Name of the person the book is lent to (null if available)',
+                            example: 'Jean Dupont',
+                        },
+                        lentAt: {
+                            type: 'string',
+                            format: 'date',
+                            nullable: true,
+                            description: 'Date the book was lent (null if available)',
+                            example: '2026-05-22',
                         },
                         shelf: {
                             type: 'string',
@@ -208,6 +234,19 @@ const options = {
                             type: 'string',
                             description: 'Cover image URL',
                             example: '/covers/les-miserables.jpg',
+                        },
+                        lentTo: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'Name of the person the book is lent to (null if available)',
+                            example: 'Jean Dupont',
+                        },
+                        lentAt: {
+                            type: 'string',
+                            format: 'date',
+                            nullable: true,
+                            description: 'Date the book was lent (null if available)',
+                            example: '2026-05-22',
                         },
                         shelf: {
                             type: 'string',

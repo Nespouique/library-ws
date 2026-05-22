@@ -57,6 +57,8 @@ CREATE TABLE Books (
     date DATE,
     description TEXT,
     jacket VARCHAR(255),
+    lentTo VARCHAR(255),
+    lentAt DATE,
     shelf VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX author (author),
@@ -72,6 +74,8 @@ CREATE TABLE Books (
 - Contrainte d'unicité : `isbn` - Chaque livre a un ISBN unique (NULL autorisé pour les livres sans ISBN)
 - Clé étrangère : `author` → `Authors(id)`
 - Clé étrangère : `shelf` → `Shelves(id)` (optionnelle)
+- `lentTo` : Nom de la personne à qui le livre est prêté (NULL si disponible)
+- `lentAt` : Date du prêt (NULL si disponible)
 
 **Index :**
 

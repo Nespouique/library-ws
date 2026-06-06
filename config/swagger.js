@@ -31,7 +31,7 @@ const options = {
             schemas: {
                 Author: {
                     type: 'object',
-                    required: ['firstName', 'lastName'],
+                    anyOf: [{ required: ['firstName'] }, { required: ['lastName'] }],
                     properties: {
                         id: {
                             type: 'string',
@@ -41,19 +41,19 @@ const options = {
                         },
                         firstName: {
                             type: 'string',
-                            description: 'Author first name',
+                            description: 'Author first name (optional if lastName is provided)',
                             example: 'Victor',
                         },
                         lastName: {
                             type: 'string',
-                            description: 'Author last name',
+                            description: 'Author last name (optional if firstName is provided)',
                             example: 'HUGO',
                         },
                     },
                 },
                 Author: {
                     type: 'object',
-                    required: ['firstName', 'lastName'],
+                    anyOf: [{ required: ['firstName'] }, { required: ['lastName'] }],
                     properties: {
                         id: {
                             type: 'string',
@@ -63,12 +63,12 @@ const options = {
                         },
                         firstName: {
                             type: 'string',
-                            description: 'Author first name',
+                            description: 'Author first name (optional if lastName is provided)',
                             example: 'Victor',
                         },
                         lastName: {
                             type: 'string',
-                            description: 'Author last name',
+                            description: 'Author last name (optional if firstName is provided)',
                             example: 'HUGO',
                         },
                     },

@@ -129,6 +129,26 @@ async function migrateSchema(connection) {
         } else {
             console.log('✅ Colonne Books.lentAt déjà présente');
         }
+
+        // Migration de données : nettoyage des placeholders '*' dans Authors
+        console.log("📦 Migration : nettoyage des placeholders '*' dans Authors...");
+
+        // Cas standard : firstName='*' et lastName renseigné -> firstName vide
+        const [firstNameStarResult] = await connection.execute("UPDATE Authors SET firstName = '' WHERE firstName = '*' AND lastName <> '*'");
+
+        // Cas standard : lastName='*' et firstName renseigné -> lastName vide
+        const [lastNameStarResult] = await connection.execute("UPDATE Authors SET lastName = '' WHERE lastName = '*' AND firstName <> '*'");
+
+        // Cas métier demandé : Aristophane doit être en nom
+        const [aristophaneResult] = await connection.execute("UPDATE Authors SET firstName = '', lastName = 'ARISTOPHANE' WHERE id = ? AND firstName = 'Aristophane' AND lastName = ''", ['53a9f9c2-70d0-4ed9-8cd5-2da0e2d4eb1f']);
+
+        const cleanedRows = firstNameStarResult.affectedRows + lastNameStarResult.affectedRows + aristophaneResult.affectedRows;
+
+        if (cleanedRows > 0) {
+            console.log(`✅ Migration Authors placeholders appliquée (${cleanedRows} ligne(s) modifiée(s))`);
+        } else {
+            console.log('✅ Migration Authors placeholders déjà à jour');
+        }
     } catch (error) {
         console.error('❌ Erreur lors des migrations de schéma:', error);
         throw error;
@@ -230,6 +250,7 @@ async function initializeDatabase() {
             console.log('🏗️ Tables manquantes détectées, création en cours...');
             await createTables(connection);
             await insertSampleData(connection);
+            await migrateSchema(connection);
             console.log('✅ Base de données initialisée avec succès!');
         } else {
             console.log("✅ Toutes les tables existent déjà, pas d'initialisation nécessaire");

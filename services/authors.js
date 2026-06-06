@@ -2,6 +2,18 @@ import db from './db-pool.js';
 import { emptyOrRows } from '../utils/helper.js';
 import { v4 as uuidv4 } from 'uuid';
 
+function normalizeName(value) {
+    return typeof value === 'string' ? value.trim() : '';
+}
+
+function validateAuthorNames(firstName, lastName) {
+    if (!firstName && !lastName) {
+        const error = new Error('At least one of firstName or lastName is required');
+        error.statusCode = 400;
+        throw error;
+    }
+}
+
 async function getMultiple() {
     const rows = await db.query(`SELECT id, firstName, lastName FROM Authors`);
     return emptyOrRows(rows);
@@ -14,35 +26,43 @@ async function getById(id) {
 }
 
 async function create(author) {
+    const normalizedAuthor = {
+        firstName: normalizeName(author?.firstName),
+        lastName: normalizeName(author?.lastName),
+    };
+
+    validateAuthorNames(normalizedAuthor.firstName, normalizedAuthor.lastName);
+
     // Vérifie qu'un auteur avec le même prénom et nom n'existe pas déjà
-    const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ?', [author.firstName, author.lastName]);
+    const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ?', [normalizedAuthor.firstName, normalizedAuthor.lastName]);
     if (existing.length) {
         const error = new Error('Author already exists');
         error.statusCode = 409;
         throw error;
     }
     const authorId = uuidv4();
-    await db.query('INSERT INTO Authors (id, firstName, lastName) VALUES (?, ?, ?)', [authorId, author.firstName, author.lastName]);
+    await db.query('INSERT INTO Authors (id, firstName, lastName) VALUES (?, ?, ?)', [authorId, normalizedAuthor.firstName, normalizedAuthor.lastName]);
 
-    return { id: authorId, ...author };
+    return { id: authorId, ...normalizedAuthor };
 }
 
 async function update(id, author) {
-    // Validation PUT : tous les champs requis doivent être fournis
-    if (!author.firstName || !author.lastName) {
-        const error = new Error('PUT requires complete object: firstName and lastName are required');
-        error.statusCode = 400;
-        throw error;
-    }
+    const normalizedAuthor = {
+        firstName: normalizeName(author?.firstName),
+        lastName: normalizeName(author?.lastName),
+    };
+
+    // Validation PUT : au moins un des deux champs doit être renseigné
+    validateAuthorNames(normalizedAuthor.firstName, normalizedAuthor.lastName);
 
     // Vérifie qu'aucun autre auteur n'a déjà ce prénom et nom
-    const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [author.firstName, author.lastName, id]);
+    const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [normalizedAuthor.firstName, normalizedAuthor.lastName, id]);
     if (existing.length) {
         const error = new Error('Author already exists');
         error.statusCode = 409;
         throw error;
     }
-    const result = await db.query('UPDATE Authors SET firstName=?, lastName=? WHERE id=?', [author.firstName, author.lastName, id]);
+    const result = await db.query('UPDATE Authors SET firstName=?, lastName=? WHERE id=?', [normalizedAuthor.firstName, normalizedAuthor.lastName, id]);
 
     return result.affectedRows > 0;
 }
@@ -60,12 +80,12 @@ async function updatePartial(id, updates) {
 
     if (updates.firstName !== undefined) {
         fields.push('firstName = ?');
-        values.push(updates.firstName);
+        values.push(normalizeName(updates.firstName));
     }
 
     if (updates.lastName !== undefined) {
         fields.push('lastName = ?');
-        values.push(updates.lastName);
+        values.push(normalizeName(updates.lastName));
     }
 
     // Si aucun champ à mettre à jour
@@ -74,8 +94,10 @@ async function updatePartial(id, updates) {
     }
 
     // Vérifie les conflits de noms si nécessaire
-    const finalFirstName = updates.firstName !== undefined ? updates.firstName : current.firstName;
-    const finalLastName = updates.lastName !== undefined ? updates.lastName : current.lastName;
+    const finalFirstName = updates.firstName !== undefined ? normalizeName(updates.firstName) : normalizeName(current.firstName);
+    const finalLastName = updates.lastName !== undefined ? normalizeName(updates.lastName) : normalizeName(current.lastName);
+
+    validateAuthorNames(finalFirstName, finalLastName);
 
     const existing = await db.query('SELECT id FROM Authors WHERE firstName = ? AND lastName = ? AND id != ?', [finalFirstName, finalLastName, id]);
     if (existing.length) {

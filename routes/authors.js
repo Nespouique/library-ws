@@ -94,17 +94,17 @@ router.get('/:id', async function (req, res, next) {
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - firstName
- *               - lastName
+ *             anyOf:
+ *               - required: [firstName]
+ *               - required: [lastName]
  *             properties:
  *               firstName:
  *                 type: string
- *                 description: Author first name
+ *                 description: Author first name (optional if lastName is provided)
  *                 example: Victor
  *               lastName:
  *                 type: string
- *                 description: Author last name
+ *                 description: Author last name (optional if firstName is provided)
  *                 example: HUGO
  *     responses:
  *       201:
@@ -157,17 +157,17 @@ router.post('/', async function (req, res, next) {
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - firstName
- *               - lastName
+ *             anyOf:
+ *               - required: [firstName]
+ *               - required: [lastName]
  *             properties:
  *               firstName:
  *                 type: string
- *                 description: Author first name
+ *                 description: Author first name (optional if lastName is provided)
  *                 example: Victor
  *               lastName:
  *                 type: string
- *                 description: Author last name
+ *                 description: Author last name (optional if firstName is provided)
  *                 example: HUGO
  *     responses:
  *       200:
